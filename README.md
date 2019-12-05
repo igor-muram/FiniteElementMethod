@@ -4,4 +4,4 @@ The basic functions are cubic Lagrangian type on triangles.<br>
 Boundary conditions of the first and second types.<br>
 The coefficients of the equation are constants on each finite element.<br>
 The matrix of a system of linear equations is generated in a sparse row-column format.<br>
-To solve SLAE, a locally optimal scheme with central diagonal preconditioning is used.
+A locally optimal scheme with central diagonal preconditioning is used to solve SLAE.
