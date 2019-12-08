@@ -15,12 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="Source\main.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="derivatives.txt">
+    <Text Include="Source\triangles.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="Source\points.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
   </ItemGroup>

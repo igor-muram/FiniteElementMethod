@@ -20,8 +20,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{F066101E-5420-4F4F-BA77-AFDC063359D1}</ProjectGuid>
-    <RootNamespace>Cursach</RootNamespace>
+    <ProjectGuid>{76164E01-139C-473D-933A-EC8E899EC9DF}</ProjectGuid>
+    <RootNamespace>HeatEquation</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -123,10 +123,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Source\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="derivatives.txt" />
+    <Text Include="Source\points.txt" />
+    <Text Include="Source\triangles.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
