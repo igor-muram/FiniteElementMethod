@@ -126,6 +126,7 @@
     <ClCompile Include="Source\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="boundary_conditions_2.txt" />
     <Text Include="Source\points.txt" />
     <Text Include="Source\triangles.txt" />
   </ItemGroup>

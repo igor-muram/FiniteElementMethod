@@ -26,5 +26,8 @@
     <Text Include="Source\points.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
+    <Text Include="boundary_conditions_2.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
   </ItemGroup>
 </Project>
