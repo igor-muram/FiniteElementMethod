@@ -299,7 +299,7 @@ void FEM::BuildGlobal()
 	}
 }
 
-double FEM::Alpha(Triangle& t)
+void FEM::Alpha(Triangle& t)
 {
 	double x1 = points[t.verts[0]].x;
 	double y1 = points[t.verts[0]].y;

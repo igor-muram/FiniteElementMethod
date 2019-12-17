@@ -122,7 +122,7 @@ private:
 	vector<double> globalB;
 
 	vector<Point> CalculateCoords(Triangle& t);
-	double Alpha(Triangle& t);
+	void Alpha(Triangle& t);
 	double Det(Triangle& t);
 	int Factorial(int N);
 };
