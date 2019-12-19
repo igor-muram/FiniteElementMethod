@@ -129,6 +129,12 @@
   <ItemGroup>
     <ClInclude Include="Source\Core.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Source\boundary1.txt" />
+    <Text Include="Source\boundary2.txt" />
+    <Text Include="Source\points.txt" />
+    <Text Include="Source\triangles.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

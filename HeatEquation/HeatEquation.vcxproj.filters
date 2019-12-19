@@ -27,4 +27,18 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Source\boundary1.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="Source\boundary2.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="Source\points.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="Source\triangles.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

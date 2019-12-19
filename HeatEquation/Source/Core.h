@@ -35,6 +35,7 @@ struct Vertex
 struct Point
 {
 	Point(double x, double y) : x(x), y(y) {}
+	Point() : x(0.0), y(0.0) {}
 	double x, y;
 
 	Point operator+(Point& a)
@@ -99,6 +100,9 @@ private:
 	void BuildLocalB(Triangle& t);
 	void BuildGlobal();
 	void AddLocalToGlobal(Triangle& t);
+	void Boundary1();
+	void Boundary2();
+	void Compute();
 
 	int triangleCount;
 	int nodeCount;
@@ -118,11 +122,19 @@ private:
 	vector<int> materials;
 	LocalMatrix localMatrix;
 	Matrix globalMatrix;
+	Matrix LLT;
 	vector<double> localB;
 	vector<double> globalB;
+	vector<double> q;
 
 	vector<Point> CalculateCoords(Triangle& t);
 	void Alpha(Triangle& t);
 	double Det(Triangle& t);
 	int Factorial(int N);
+	void LLT_dec();
+	void Forward(vector<double>& y, vector<double>& b);
+	void Backward(vector<double>& x, vector<double>& y);
+	void Multiply(vector<double>& x, vector<double>& res);
+	double Scal(vector<double>& x, vector<double>& y);
+	void Output();
 };
