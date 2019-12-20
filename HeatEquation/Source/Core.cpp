@@ -27,15 +27,16 @@ vector<vector<PsiComp>> basis = {
 };
 
 vector<function<double(double, double)>> f = {
-	[](double x, double y) { return x * (x * x - 6); },
+	[](double x, double y) { return -2 * x * y * ((y * y + x * x) / 3.0 - 2.0); },
 	[](double x, double y) { return x * x; },
 	[](double x, double y) { return y * y; }
 };
 
-vector<double> gamma = { 1, 1, 2 };
+vector<double> gamma = { 0, 0, 0 };
 vector<double> lambda = { 1, 1, 2 };
 vector<double> uValue = { 1, 1, 2 };
 vector<double> thetaValue = { 1, 1, 2 };
+vector<double> edgeBasisValues = { 1, 1, 1, 1 };
 
 FEM::FEM(string pointsFile, string trianglesFile, string bounds1File, string bounds2File)
 {
@@ -300,15 +301,10 @@ void FEM::Boundary1()
 {
 	for (int i = 0; i < vertexCount; i++)
 	{
-		int e = bound1[i].vertex;
-		globalMatrix.DI[e] = 1.E+30;
-		globalB[e] = 1.E+30 * uValue[bound1[i].valueNo];
+		int v = bound1[i].vertex;
+		globalMatrix.DI[v] = 1.0E+50;
+		globalB[v] = 1.0E+50 * uValue[bound1[i].valueNo];
 	}
-}
-
-void FEM::Boundary2()
-{
-
 }
 
 void FEM::Compute()
@@ -322,7 +318,7 @@ void FEM::Compute()
 	Mr.resize(nodeCount);
 	LLT.DI.resize(nodeCount);
 	LLT.AL.resize(globalMatrix.IA[nodeCount]);
-	LLT_dec();
+	LLTFactorization();
 
 	// r = A*x
 	Multiply(q, r);
@@ -423,7 +419,7 @@ int FEM::Factorial(int n)
 	return res;
 }
 
-void FEM::LLT_dec()
+void FEM::LLTFactorization()
 {
 	for (int i = 0; i < nodeCount; i++)
 	{
@@ -505,8 +501,8 @@ void FEM::Multiply(vector<double>& x, vector<double>& res)
 		for (int k = i0; k < i1; k++)
 		{
 			int j = globalMatrix.JA[k];
-			res[i] += LLT.AL[k] * x[j];
-			res[j] += LLT.AL[k] * x[i];
+			res[i] += globalMatrix.AL[k] * x[j];
+			res[j] += globalMatrix.AL[k] * x[i];
 		}
 	}
 }
@@ -515,8 +511,34 @@ double FEM::Scal(vector<double>& x, vector<double>& y)
 {
 	double scal = 0;
 	for (int i = 0; i < nodeCount; i++)
-		scal += x[i] * y[i];
+		if (x[i] < 1.0e+30 && y[i] < 1.0e+30)
+			scal += x[i] * y[i];
 	return scal;
+}
+
+double FEM::Distance(Point a, Point b)
+{
+	return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+
+void FEM::Boundary2()
+{
+	vector<double> conditions;
+
+	for (int edge = 0; edge < edgeCount; edge++)
+	{
+		fill(conditions.begin(), conditions.end(), 0);
+		for (int i = 0; i < 4; i++)
+		{
+			double h = Distance(points[bound2[edge].v1], points[bound2[edge].v4]);
+			conditions[i] = h * edgeBasisValues[i] * thetaValue[bound2[edge].thetaNo];
+		}
+
+		globalB[bound2[edge].v1] += conditions[0];
+		globalB[bound2[edge].v4] += conditions[1];
+		globalB[bound2[edge].v2] += conditions[2];
+		globalB[bound2[edge].v3] += conditions[3];
+	}
 }
 
 void FEM::Output()
