@@ -246,7 +246,7 @@ void FEM::BuildLocalMatrix(Triangle& t)
 			double sum = 0;
 			for (auto comp : gPattern[i][j])
 			{
-				double scalGrad = grads[comp.grad1].a1 * grads[comp.grad1].a1 + grads[comp.grad1].a2 * grads[comp.grad1].a2;
+				double scalGrad = grads[comp.grad1].a1 * grads[comp.grad2].a1 + grads[comp.grad1].a2 * grads[comp.grad2].a2;
 				sum += comp.coeff * scalGrad;
 			}
 			localMatrix[i][j] = (gamma[t.materialNo] * mPattern[i][j] + lambda[t.materialNo] * sum) * D;
@@ -366,15 +366,16 @@ vector<Point> FEM::CalculateCoords(Triangle& t)
 	Point t3 = points[t.verts[2]];
 
 	vector<Point> coords;
+
 	coords.push_back(t1);
 	coords.push_back(t2);
 	coords.push_back(t3);
-	coords.push_back((t1 + t2) / 3.0);
-	coords.push_back((t1 + t2) * 2 / 3.0);
-	coords.push_back((t2 + t3) / 3.0);
-	coords.push_back((t2 + t3) * 2 / 3.0);
-	coords.push_back((t1 + t3) / 3.0);
-	coords.push_back((t1 + t3) * 2 / 3.0);
+	coords.push_back(((t2 / 2.0) + t1) * 2.0 / 3.0);
+	coords.push_back(((t2 * 2.0) + t1) / 3.0);
+	coords.push_back(((t3 / 2.0) + t1) * 2.0 / 3.0);
+	coords.push_back(((t3 * 2.0) + t1) / 3.0);
+	coords.push_back(((t3 / 2.0) + t2) * 2.0 / 3.0);
+	coords.push_back(((t3 * 2.0) + t2) / 3.0);
 	coords.push_back((t1 + t2 + t3) / 3.0);
 
 	return coords;
