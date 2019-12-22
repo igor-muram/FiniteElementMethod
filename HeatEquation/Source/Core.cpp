@@ -88,21 +88,21 @@ void FEM::InputBound(string bounds1File, string bounds2File)
 	in.close();
 
 
-//	in.open(bounds2File);
-//	in >> edgeCount;
-//	bound2.resize(edgeCount);
-//	for (int i = 0; i < edgeCount; i++)
-//	{
-//		in >> bound2[i].v1 >> bound2[i].v4 >> bound2[i].thetaNo;
-//		auto a = bound2[i].v1;
-//		auto b = bound2[i].v4;
-//
-//		if (a < b) swap(bound2[i].v1, bound2[i].v4);
-//
-//		bound2[i].v2 = edgeMatrix[a][b];
-//		bound2[i].v3 = edgeMatrix[a][b] + 1;
-//	}
-//	in.close();
+	in.open(bounds2File);
+	in >> edgeCount;
+	bound2.resize(edgeCount);
+	for (int i = 0; i < edgeCount; i++)
+	{
+		in >> bound2[i].v1 >> bound2[i].v4 >> bound2[i].thetaNo;
+		auto a = bound2[i].v1;
+		auto b = bound2[i].v4;
+
+		if (a < b) swap(bound2[i].v1, bound2[i].v4);
+
+		bound2[i].v2 = edgeMatrix[a][b];
+		bound2[i].v3 = edgeMatrix[a][b] + 1;
+	}
+	in.close();
 }
 
 void FEM::AllocateMemory()
@@ -253,7 +253,7 @@ void FEM::BuildLocalMatrix(Triangle& t)
 				double scalGrad = grads[comp.grad1].a1 * grads[comp.grad2].a1 + grads[comp.grad1].a2 * grads[comp.grad2].a2;
 				sum += comp.coeff * scalGrad;
 			}
-			localMatrix[i][j] = lambda[t.materialNo] * sum * D;
+			localMatrix[i][j] = (gamma[t.materialNo] * mPattern[i][j] + lambda[t.materialNo] * sum) * D;
 		}
 	}
 }
@@ -266,9 +266,7 @@ void FEM::BuildLocalB(Triangle& t)
 	fill(localB.begin(), localB.end(), 0.0);
 	vector<double> temp(10);
 	for (int i = 0; i < 10; i++)
-	{
 		temp[i] = f[t.materialNo](coords[i].x, coords[i].y);
-	}
 
 	for (int i = 0; i < 10; i++)
 	{
