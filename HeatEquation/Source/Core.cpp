@@ -1,5 +1,8 @@
 #include "Core.h"
 
+#include <iostream>
+#include <iomanip>
+
 vector<vector<DerComp>> ders = {
 	{ { 0, 13.5, 2, 0, 0 },			{ 0, -9, 1, 0, 0 },			{ 0, 1, 0, 0, 0 } },
 	{ { 1, 13.5, 0, 2, 0 },			{ 1, -9, 0, 1, 0 },			{ 1, 1, 0, 0, 0 } },
@@ -27,14 +30,14 @@ vector<vector<PsiComp>> basis = {
 };
 
 vector<function<double(double, double)>> f = {
-	[](double x, double y) { return -2 * x * y * ((y * y + x * x) / 3.0 - 2.0); },
+	[](double x, double y) { return 2 * (y * y - 1) + 2 * (x * x - 1); },
 	[](double x, double y) { return x * x; },
 	[](double x, double y) { return y * y; }
 };
 
 vector<double> gamma = { 0, 0, 0 };
 vector<double> lambda = { 1, 1, 2 };
-vector<double> uValue = { 1, 1, 2 };
+vector<double> uValue = { 0, 0, 0, 0 };
 vector<double> thetaValue = { 1, 1, 2 };
 vector<double> edgeBasisValues = { 1, 1, 1, 1 };
 
@@ -47,6 +50,7 @@ FEM::FEM(string pointsFile, string trianglesFile, string bounds1File, string bou
 	InputBound(bounds1File, bounds2File);
 	CreateLocalPattern();
 	BuildGlobal();
+	Boundary1();
 	Compute();
 	Output();
 }
@@ -83,21 +87,22 @@ void FEM::InputBound(string bounds1File, string bounds2File)
 		in >> bound1[i].vertex >> bound1[i].valueNo;
 	in.close();
 
-	in.open(bounds2File);
-	in >> edgeCount;
-	bound2.resize(edgeCount);
-	for (int i = 0; i < edgeCount; i++)
-	{
-		in >> bound2[i].v1 >> bound2[i].v4 >> bound2[i].thetaNo;
-		auto a = bound2[i].v1;
-		auto b = bound2[i].v4;
 
-		if (a < b) swap(bound2[i].v1, bound2[i].v4);
-
-		bound2[i].v2 = edgeMatrix[a][b];
-		bound2[i].v3 = edgeMatrix[a][b] + 1;
-	}
-	in.close();
+//	in.open(bounds2File);
+//	in >> edgeCount;
+//	bound2.resize(edgeCount);
+//	for (int i = 0; i < edgeCount; i++)
+//	{
+//		in >> bound2[i].v1 >> bound2[i].v4 >> bound2[i].thetaNo;
+//		auto a = bound2[i].v1;
+//		auto b = bound2[i].v4;
+//
+//		if (a < b) swap(bound2[i].v1, bound2[i].v4);
+//
+//		bound2[i].v2 = edgeMatrix[a][b];
+//		bound2[i].v3 = edgeMatrix[a][b] + 1;
+//	}
+//	in.close();
 }
 
 void FEM::AllocateMemory()
@@ -208,8 +213,7 @@ void FEM::CreateLocalPattern()
 					int v2 = x.v2 + y.v2;
 					int v3 = x.v3 + y.v3;
 
-
-					double coeff = x.coeff * y.coeff * Factorial(v1) * Factorial(v2) * Factorial(v3) / (double)Factorial(v1 + v2 + v3 + 2);
+					double coeff = x.coeff * y.coeff * (double)Factorial(v1) * Factorial(v2) * Factorial(v3) / (double)Factorial(v1 + v2 + v3 + 2);
 					gPattern[i][j].push_back(LocalComp(x.gradNo, y.gradNo, coeff));
 				}
 
@@ -230,7 +234,7 @@ void FEM::CreateLocalPattern()
 
 void FEM::BuildLocalMatrix(Triangle& t)
 {
-	double D = Det(t);
+	double D = AbsDet(t);
 	Alpha(t);
 	vector<Grad> grads =
 	{
@@ -249,7 +253,7 @@ void FEM::BuildLocalMatrix(Triangle& t)
 				double scalGrad = grads[comp.grad1].a1 * grads[comp.grad2].a1 + grads[comp.grad1].a2 * grads[comp.grad2].a2;
 				sum += comp.coeff * scalGrad;
 			}
-			localMatrix[i][j] = (gamma[t.materialNo] * mPattern[i][j] + lambda[t.materialNo] * sum) * D;
+			localMatrix[i][j] = lambda[t.materialNo] * sum * D;
 		}
 	}
 }
@@ -257,14 +261,22 @@ void FEM::BuildLocalMatrix(Triangle& t)
 void FEM::BuildLocalB(Triangle& t)
 {
 	vector<Point> coords = CalculateCoords(t);
-	double D = Det(t);
+	double D = AbsDet(t);
 
-	vector<double> temp(coords.size(), 0.0);
 	fill(localB.begin(), localB.end(), 0.0);
+	vector<double> temp(10);
+	for (int i = 0; i < 10; i++)
+	{
+		temp[i] = f[t.materialNo](coords[i].x, coords[i].y);
+	}
 
 	for (int i = 0; i < 10; i++)
+	{
 		for (int j = 0; j < 10; j++)
-			localB[i] += f[t.materialNo](coords[j].x, coords[j].y) * mPattern[i][j] * D;
+			localB[i] += temp[j] * mPattern[i][j];
+
+		localB[i] *= D;
+	}
 }
 
 void FEM::AddLocalToGlobal(Triangle& t)
@@ -273,13 +285,17 @@ void FEM::AddLocalToGlobal(Triangle& t)
 	{
 		globalMatrix.DI[t.verts[i]] += localMatrix[i][i];
 		globalB[t.verts[i]] += localB[i];
-		for (int j = 0; j < 10; j++)
+		for (int j = 0; j < i - 1; j++)
 		{
-			auto begin = globalMatrix.JA.begin() + globalMatrix.IA[t.verts[i]];
-			if (globalMatrix.IA[t.verts[i] + 1] > 1)
+			auto a = t.verts[i];
+			auto b = t.verts[j];
+			if (a < b) swap(a, b);
+
+			auto begin = globalMatrix.JA.begin() + globalMatrix.IA[a];
+			if (globalMatrix.IA[a + 1] > 1)
 			{
-				auto end = globalMatrix.JA.begin() + globalMatrix.IA[t.verts[i] + 1] - 1;
-				auto iter = lower_bound(begin, end, t.verts[j]);
+				auto end = globalMatrix.JA.begin() + globalMatrix.IA[a + 1] - 1;
+				auto iter = lower_bound(begin, end, b);
 				auto index = iter - globalMatrix.JA.begin();
 				globalMatrix.AL[index] += localMatrix[i][j];
 			}
@@ -331,8 +347,9 @@ void FEM::Compute()
 	Forward(z, r);
 	Backward(z, z);
 
+	double normB = sqrt(fabs(Scal(globalB, globalB)));
 	double scal_rr = Scal(r, r);
-	double diff = sqrt(fabs(scal_rr)) / Scal(globalB, globalB);
+	double diff = sqrt(fabs(scal_rr)) / normB;
 
 	double scal_Mrr = Scal(z, r);
 	for (int iter = 0; iter < maxiter && diff >= eps; iter++)
@@ -355,7 +372,7 @@ void FEM::Compute()
 		for (int i = 0; i < nodeCount; i++)
 			z[i] = Mr[i] + b * z[i];
 
-		diff = sqrt(fabs(Scal(r, r))) / Scal(globalB, globalB);
+		diff = sqrt(fabs(Scal(r, r))) / normB;
 	}
 }
 
@@ -400,7 +417,7 @@ void FEM::Alpha(Triangle& t)
 	alpha[5] = (x2 - x1) / D;
 }
 
-double FEM::Det(Triangle& t)
+double FEM::AbsDet(Triangle& t)
 {
 	double x1 = points[t.verts[0]].x;
 	double y1 = points[t.verts[0]].y;
@@ -410,6 +427,18 @@ double FEM::Det(Triangle& t)
 	double y3 = points[t.verts[2]].y;
 
 	return abs((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1));
+}
+
+double FEM::Det(Triangle& t)
+{
+	double x1 = points[t.verts[0]].x;
+	double y1 = points[t.verts[0]].y;
+	double x2 = points[t.verts[1]].x;
+	double y2 = points[t.verts[1]].y;
+	double x3 = points[t.verts[2]].x;
+	double y3 = points[t.verts[2]].y;
+
+	return (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
 }
 
 int FEM::Factorial(int n)
@@ -512,7 +541,7 @@ double FEM::Scal(vector<double>& x, vector<double>& y)
 {
 	double scal = 0;
 	for (int i = 0; i < nodeCount; i++)
-		if (x[i] < 1.0e+30 && y[i] < 1.0e+30)
+		if (x[i] < 1.0e+50 && y[i] < 1.0e+50)
 			scal += x[i] * y[i];
 	return scal;
 }

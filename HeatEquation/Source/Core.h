@@ -131,6 +131,7 @@ private:
 	vector<Point> CalculateCoords(Triangle& t);
 	void Alpha(Triangle& t);
 	double Det(Triangle& t);
+	double AbsDet(Triangle& t);
 	double Distance(Point a, Point b);
 	int Factorial(int N);
 	void LLTFactorization();
