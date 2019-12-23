@@ -36,10 +36,10 @@ vector<function<double(double, double)>> f = {
 };
 
 vector<double> gamma = { 0, 0, 0 };
-vector<double> lambda = { 1, 1, 2 };
+vector<double> lambda = { 1, 1, 1 };
 vector<double> uValue = { 0, 0, 0, 0 };
-vector<double> thetaValue = { 1, 1, 2 };
-vector<double> edgeBasisValues = { 1, 1, 1, 1 };
+vector<double> thetaValue = { 0, 0, 0 };
+vector<double> edgeBasisValues = { 0.125, 0.125, 0.375, 0.375 };
 
 FEM::FEM(string pointsFile, string trianglesFile, string bounds1File, string bounds2File)
 {
@@ -50,6 +50,7 @@ FEM::FEM(string pointsFile, string trianglesFile, string bounds1File, string bou
 	InputBound(bounds1File, bounds2File);
 	CreateLocalPattern();
 	BuildGlobal();
+	//Boundary2();
 	Boundary1();
 	Compute();
 	Output();
@@ -321,6 +322,33 @@ void FEM::Boundary1()
 	}
 }
 
+double FEM::Distance(Point a, Point b)
+{
+	return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+
+void FEM::Boundary2()
+{
+	vector<double> conditions;
+	conditions.resize(4);
+	edgeBasisValues.resize(4);
+
+	for (int edge = 0; edge < edgeCount; edge++)
+	{
+		fill(conditions.begin(), conditions.end(), 0);
+		for (int i = 0; i < 4; i++)
+		{
+			double h = Distance(points[bound2[edge].v1], points[bound2[edge].v4]);
+			conditions[i] = h * edgeBasisValues[i] * thetaValue[bound2[edge].thetaNo];
+		}
+
+		globalB[bound2[edge].v1] += conditions[0];
+		globalB[bound2[edge].v4] += conditions[1];
+		globalB[bound2[edge].v2] += conditions[2];
+		globalB[bound2[edge].v3] += conditions[3];
+	}
+}
+
 void FEM::Compute()
 {
 	vector<double> r, z, Az, Mr;
@@ -542,31 +570,6 @@ double FEM::Scal(vector<double>& x, vector<double>& y)
 		if (x[i] < 1.0e+50 && y[i] < 1.0e+50)
 			scal += x[i] * y[i];
 	return scal;
-}
-
-double FEM::Distance(Point a, Point b)
-{
-	return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
-}
-
-void FEM::Boundary2()
-{
-	vector<double> conditions;
-
-	for (int edge = 0; edge < edgeCount; edge++)
-	{
-		fill(conditions.begin(), conditions.end(), 0);
-		for (int i = 0; i < 4; i++)
-		{
-			double h = Distance(points[bound2[edge].v1], points[bound2[edge].v4]);
-			conditions[i] = h * edgeBasisValues[i] * thetaValue[bound2[edge].thetaNo];
-		}
-
-		globalB[bound2[edge].v1] += conditions[0];
-		globalB[bound2[edge].v4] += conditions[1];
-		globalB[bound2[edge].v2] += conditions[2];
-		globalB[bound2[edge].v3] += conditions[3];
-	}
 }
 
 void FEM::Output()
