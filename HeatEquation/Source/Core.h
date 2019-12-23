@@ -27,11 +27,6 @@ struct LocalComp
 	double coeff;
 };
 
-struct Vertex
-{
-	int vertex, valueNo;
-};
-
 struct Point
 {
 	Point(double x, double y) : x(x), y(y) {}
@@ -62,7 +57,7 @@ struct Grad
 struct Edge
 {
 	int v1, v2, v3, v4;
-	int thetaNo;
+	int valueNo;
 };
 
 struct Triangle
@@ -106,12 +101,12 @@ private:
 
 	int triangleCount;
 	int nodeCount;
-	int edgeCount;
-	int vertexCount;
+	int edgeCount1;
+	int edgeCount2;
 
 	vector<Point> points;
 	vector<Triangle> triangles;
-	vector<Vertex> bound1;
+	vector<Edge> bound1;
 	vector<Edge> bound2;
 
 	EdgeMatrix edgeMatrix;

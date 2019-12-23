@@ -30,14 +30,14 @@ vector<vector<PsiComp>> basis = {
 };
 
 vector<function<double(double, double)>> f = {
-	[](double x, double y) { return 2 * (y * y - 1) + 2 * (x * x - 1); },
+	[](double x, double y) { return  0.0; },
 	[](double x, double y) { return x * x; },
 	[](double x, double y) { return y * y; }
 };
 
 vector<double> gamma = { 0, 0, 0 };
 vector<double> lambda = { 1, 1, 1 };
-vector<double> uValue = { 0, 0, 0, 0 };
+vector<double> uValue = { 1, 1, 1 };
 vector<double> thetaValue = { 0, 0, 0 };
 vector<double> edgeBasisValues = { 0.125, 0.125, 0.375, 0.375 };
 
@@ -82,23 +82,32 @@ void FEM::InputGrid(string pointsFile, string trianglesFile)
 void FEM::InputBound(string bounds1File, string bounds2File)
 {
 	ifstream in(bounds1File);
-	in >> vertexCount;
-	bound1.resize(vertexCount);
-	for (int i = 0; i < vertexCount; i++)
-		in >> bound1[i].vertex >> bound1[i].valueNo;
+	in >> edgeCount1;
+	bound1.resize(edgeCount1);
+	for (int i = 0; i < edgeCount1; i++)
+	{
+		in >> bound1[i].v1 >> bound1[i].v4 >> bound1[i].valueNo;
+		auto a = bound1[i].v1;
+		auto b = bound1[i].v4;
+
+		if (b < a) swap(a, b);
+
+		bound1[i].v2 = edgeMatrix[a][b];
+		bound1[i].v3 = edgeMatrix[a][b] + 1;
+	}
 	in.close();
 
 
 	in.open(bounds2File);
-	in >> edgeCount;
-	bound2.resize(edgeCount);
-	for (int i = 0; i < edgeCount; i++)
+	in >> edgeCount2;
+	bound2.resize(edgeCount2);
+	for (int i = 0; i < edgeCount2; i++)
 	{
-		in >> bound2[i].v1 >> bound2[i].v4 >> bound2[i].thetaNo;
+		in >> bound2[i].v1 >> bound2[i].v4 >> bound2[i].valueNo;
 		auto a = bound2[i].v1;
 		auto b = bound2[i].v4;
 
-		if (a < b) swap(bound2[i].v1, bound2[i].v4);
+		if (a < b) swap(a, b);
 
 		bound2[i].v2 = edgeMatrix[a][b];
 		bound2[i].v3 = edgeMatrix[a][b] + 1;
@@ -137,7 +146,7 @@ void FEM::VertexNumbering()
 			{
 				int a = t.verts[i];
 				int b = t.verts[j];
-				bool f = a < b;
+				bool f = a > b;
 				if (f) swap(a, b);
 
 				if (edgeMatrix[a][b] == 0)
@@ -314,17 +323,17 @@ void FEM::BuildGlobal()
 
 void FEM::Boundary1()
 {
-	for (int i = 0; i < vertexCount; i++)
+	for (auto edge : bound1)
 	{
-		int v = bound1[i].vertex;
-		globalMatrix.DI[v] = 1.0E+50;
-		globalB[v] = 1.0E+50 * uValue[bound1[i].valueNo];
+		globalMatrix.DI[edge.v1] = 1.0E+50;
+		globalB[edge.v1] = 1.0E+50 * uValue[edge.valueNo];
+		globalMatrix.DI[edge.v2] = 1.0E+50;
+		globalB[edge.v2] = 1.0E+50 * uValue[edge.valueNo];
+		globalMatrix.DI[edge.v3] = 1.0E+50;
+		globalB[edge.v3] = 1.0E+50 * uValue[edge.valueNo];
+		globalMatrix.DI[edge.v4] = 1.0E+50;
+		globalB[edge.v4] = 1.0E+50 * uValue[edge.valueNo];
 	}
-}
-
-double FEM::Distance(Point a, Point b)
-{
-	return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 }
 
 void FEM::Boundary2()
@@ -333,13 +342,13 @@ void FEM::Boundary2()
 	conditions.resize(4);
 	edgeBasisValues.resize(4);
 
-	for (int edge = 0; edge < edgeCount; edge++)
+	for (int edge = 0; edge < edgeCount2; edge++)
 	{
 		fill(conditions.begin(), conditions.end(), 0);
 		for (int i = 0; i < 4; i++)
 		{
 			double h = Distance(points[bound2[edge].v1], points[bound2[edge].v4]);
-			conditions[i] = h * edgeBasisValues[i] * thetaValue[bound2[edge].thetaNo];
+			conditions[i] = h * edgeBasisValues[i] * thetaValue[bound2[edge].valueNo];
 		}
 
 		globalB[bound2[edge].v1] += conditions[0];
@@ -349,54 +358,49 @@ void FEM::Boundary2()
 	}
 }
 
+double FEM::Distance(Point a, Point b)
+{
+	return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+
 void FEM::Compute()
 {
-	vector<double> r, z, Az, Mr;
+	vector<double> r, z, Az;
 	int iter = 0, maxiter = 100000;
 	double eps = 1.E-15;
 	r.resize(nodeCount);
 	z.resize(nodeCount);
 	Az.resize(nodeCount);
-	Mr.resize(nodeCount);
-	LLT.DI.resize(nodeCount);
-	LLT.AL.resize(globalMatrix.IA[nodeCount]);
-	LLTFactorization();
 
 	// r = A*x
 	Multiply(q, r);
 
 	// r = f - A*x 
 	for (int i = 0; i < nodeCount; i++)
+	{
 		r[i] = globalB[i] - r[i];
-
-	// z = M^(-1)*r
-	Forward(z, r);
-	Backward(z, z);
+		z[i] = r[i];
+	}
 
 	double normB = sqrt(fabs(Scal(globalB, globalB)));
 	double scal_rr = Scal(r, r);
 	double diff = sqrt(fabs(scal_rr)) / normB;
 
-	double scal_Mrr = Scal(z, r);
 	for (int iter = 0; iter < maxiter && diff >= eps; iter++)
 	{
 		Multiply(z, Az);     // Az = A*z
-		double a = scal_Mrr / Scal(Az, z);
+		double a = scal_rr / Scal(Az, z);
 		for (int i = 0; i < nodeCount; i++)
 		{
 			q[i] += a * z[i];
 			r[i] -= a * Az[i];
 		}
 
-		// Mr = M^(-1)*r
-		Forward(Mr, r);
-		Backward(Mr, Mr);
-
-		double b = 1. / scal_Mrr;
-		scal_Mrr = Scal(Mr, r);
-		b *= scal_Mrr;
+		double b = 1. / scal_rr;
+		scal_rr = Scal(r, r);
+		b *= scal_rr;
 		for (int i = 0; i < nodeCount; i++)
-			z[i] = Mr[i] + b * z[i];
+			z[i] = r[i] + b * z[i];
 
 		diff = sqrt(fabs(Scal(r, r))) / normB;
 	}
@@ -567,8 +571,7 @@ double FEM::Scal(vector<double>& x, vector<double>& y)
 {
 	double scal = 0;
 	for (int i = 0; i < nodeCount; i++)
-		if (x[i] < 1.0e+50 && y[i] < 1.0e+50)
-			scal += x[i] * y[i];
+		scal += x[i] * y[i];
 	return scal;
 }
 
