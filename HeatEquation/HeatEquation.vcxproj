@@ -130,10 +130,10 @@
     <ClInclude Include="Source\Core.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\..\..\..\..\data\boundary1.txt" />
-    <Text Include="..\..\..\..\..\data\boundary2.txt" />
-    <Text Include="..\..\..\..\..\data\points.txt" />
-    <Text Include="..\..\..\..\..\data\triangles.txt" />
+    <Text Include="boundary1.txt" />
+    <Text Include="boundary2.txt" />
+    <Text Include="points.txt" />
+    <Text Include="triangles.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <iomanip>
 
+
+
 vector<vector<DerComp>> ders = {
 	{ { 0, 13.5, 2, 0, 0 },			{ 0, -9, 1, 0, 0 },			{ 0, 1, 0, 0, 0 } },
 	{ { 1, 13.5, 0, 2, 0 },			{ 1, -9, 0, 1, 0 },			{ 1, 1, 0, 0, 0 } },
@@ -30,14 +32,14 @@ vector<vector<PsiComp>> basis = {
 };
 
 vector<function<double(double, double)>> f = {
-	[](double x, double y) { return  0.0; },
+	[](double x, double y) { return 0.0; },
 	[](double x, double y) { return x * x; },
 	[](double x, double y) { return y * y; }
 };
 
 vector<double> gamma = { 0, 0, 0 };
 vector<double> lambda = { 1, 1, 1 };
-vector<double> uValue = { 1, 1, 1 };
+vector<double> uValue = { -1, 1 };
 vector<double> thetaValue = { 0, 0, 0 };
 vector<double> edgeBasisValues = { 0.125, 0.125, 0.375, 0.375 };
 
@@ -185,6 +187,7 @@ void FEM::Portrait()
 			}
 	}
 
+	globalMatrix.N = nodeCount;
 	globalMatrix.IA.resize(nodeCount + 1);
 	int* IA = &globalMatrix.IA[0];
 	IA[0] = IA[1] = 0;
@@ -235,7 +238,7 @@ void FEM::CreateLocalPattern()
 					int v2 = x.v2 + y.v2;
 					int v3 = x.v3 + y.v3;
 
-					sum += x.coeff * y.coeff * Factorial(v1) * Factorial(v2) * Factorial(v3) / (double)Factorial(v1 + v2 + v3 + 2);
+					sum += x.coeff * y.coeff * (double)Factorial(v1) * Factorial(v2) * Factorial(v3) / (double)Factorial(v1 + v2 + v3 + 2);
 				}
 			mPattern[i][j] = sum;
 		}
@@ -293,14 +296,14 @@ void FEM::AddLocalToGlobal(Triangle& t)
 	{
 		globalMatrix.DI[t.verts[i]] += localMatrix[i][i];
 		globalB[t.verts[i]] += localB[i];
-		for (int j = 0; j < i - 1; j++)
+		for (int j = 0; j < i; j++)
 		{
 			auto a = t.verts[i];
 			auto b = t.verts[j];
 			if (a < b) swap(a, b);
 
 			auto begin = globalMatrix.JA.begin() + globalMatrix.IA[a];
-			if (globalMatrix.IA[a + 1] > 1)
+			if (globalMatrix.IA[a + 1] > globalMatrix.IA[a])
 			{
 				auto end = globalMatrix.JA.begin() + globalMatrix.IA[a + 1] - 1;
 				auto iter = lower_bound(begin, end, b);
@@ -309,16 +312,111 @@ void FEM::AddLocalToGlobal(Triangle& t)
 			}
 		}
 	}
+
+	/*-----------------------------------Tight format---------------------------------------*/
+	for (int i = 0; i < 10; i++)
+	{
+		//globalB[t.verts[i]] += localB[i];
+		for (int j = 0; j < 10; j++)
+		{
+			A[t.verts[i]][t.verts[j]] += localMatrix[i][j];
+		}
+	}
 }
 
 void FEM::BuildGlobal()
 {
+	/*---------------------------------For debug-----------------------------------------*/
+	A.resize(nodeCount);
+	for (int i = 0; i < nodeCount; i++)
+	{
+		A[i].resize(nodeCount);
+	}
+	/*---------------------------------For debug-----------------------------------------*/
+
 	for (auto& t : triangles)
 	{
 		BuildLocalMatrix(t);
+
+		/*---------------------------------For debug-----------------------------------------*/
+		vector<double> aa = { -1, -1, 1, -1, -1, -1.0 / 3, 1.0 / 3, -1.0 / 3, 1.0 / 3, -1.0 / 3 };
+		vector<double> b(10, 0.0);
+
+		for (int i = 0; i < 10; i++)
+		{
+			for (int j = 0; j < 10; j++)
+			{
+				b[i] += aa[j] * localMatrix[i][j];
+			}
+		}
+		/*---------------------------------For debug-----------------------------------------*/
+
 		BuildLocalB(t);
 		AddLocalToGlobal(t);
 	}
+
+	/*---------------------------------For debug-----------------------------------------*/
+	vector<vector<double>> A1;
+	A1.resize(nodeCount);
+	for (int i = 0; i < nodeCount; i++)
+	{
+		A1[i].resize(nodeCount);
+	}
+
+	for (int i = 0; i < nodeCount; i++)
+		A1[i][i] = globalMatrix.DI[i];
+
+	for (int i = 0; i < nodeCount; i++)
+	{
+		int i0 = globalMatrix.IA[i], i1 = globalMatrix.IA[i + 1];
+
+		for (int k = i0; k < i1; k++)
+		{
+			int j = globalMatrix.JA[k];
+			A1[i][j] = globalMatrix.AL[k];
+			A1[j][i] = globalMatrix.AL[k];
+		}
+	}
+
+	for (int i = 0; i < nodeCount; i++)
+	{
+		for (int j = 0; j < nodeCount; j++)
+			cout << A1[i][j] << "\t";
+
+		cout << endl;
+	}
+	cout << endl << endl;
+	for (int i = 0; i < nodeCount; i++)
+	{
+		double sum = 0;
+		for (int j = 0; j < nodeCount; j++)
+			sum += A1[i][j];
+
+		cout << sum << endl;
+	}
+	cout << endl << endl;
+	cout << endl << endl << endl << endl;
+
+
+	for (int i = 0; i < nodeCount; i++)
+	{
+		for (int j = 0; j < nodeCount; j++)
+			cout << A[i][j] << "\t";
+
+		cout << endl;
+	}
+	cout << endl << endl;
+
+	for (int i = 0; i < nodeCount; i++)
+	{
+		double sum = 0;
+		for (int j = 0; j < nodeCount; j++)
+			sum += A[i][j];
+
+		cout << sum << endl;
+	}
+	cout << endl << endl;
+	/*---------------------------------For debug-----------------------------------------*/
 }
 
 void FEM::Boundary1()
@@ -366,11 +464,18 @@ double FEM::Distance(Point a, Point b)
 void FEM::Compute()
 {
 	vector<double> r, z, Az;
-	int iter = 0, maxiter = 100000;
+	int maxiter = 100000;
 	double eps = 1.E-15;
 	r.resize(nodeCount);
 	z.resize(nodeCount);
 	Az.resize(nodeCount);
+
+	/*---------------------------------For debug-----------------------------------------*/
+	vector<double> aa = { -1, -1, 1, 1, -1, -1, 1.0 / 3, -1.0 / 3, -1.0 / 3, 1.0 / 3, -1.0 / 3, -1.0 / 3, 1.0 / 3, 1.0, 1, 1.0 / 3 };
+
+	//Multiply(aa, q);
+	/*---------------------------------For debug-----------------------------------------*/
+
 
 	// r = A*x
 	Multiply(q, r);
@@ -382,11 +487,11 @@ void FEM::Compute()
 		z[i] = r[i];
 	}
 
-	double normB = sqrt(fabs(Scal(globalB, globalB)));
+	double normB = 1;//sqrt(fabs(Scal(globalB, globalB)));
 	double scal_rr = Scal(r, r);
 	double diff = sqrt(fabs(scal_rr)) / normB;
-
-	for (int iter = 0; iter < maxiter && diff >= eps; iter++)
+	int iter = 0;
+	for (; iter < maxiter && diff >= eps; iter++)
 	{
 		Multiply(z, Az);     // Az = A*z
 		double a = scal_rr / Scal(Az, z);
@@ -479,47 +584,6 @@ int FEM::Factorial(int n)
 	return res;
 }
 
-void FEM::LLTFactorization()
-{
-	for (int i = 0; i < nodeCount; i++)
-	{
-		double sum_D = 0;
-
-		int i0 = globalMatrix.IA[i], i1 = globalMatrix.IA[i + 1];
-		for (int k = i0; k < i1; k++)
-		{
-			double sum_L = 0;
-			int j = globalMatrix.JA[k];
-
-			int j0 = globalMatrix.IA[j], j1 = globalMatrix.IA[j + 1];
-
-			int ki = i0;
-			int kj = j0;
-
-			for (; ki < i1 && kj < j1; )
-			{
-				int j_ki = globalMatrix.JA[ki];
-				int j_kj = globalMatrix.JA[kj];
-
-				if (j_ki == j_kj)
-				{
-					sum_L += LLT.AL[ki] * LLT.AL[kj];
-					ki++;
-					kj++;
-				}
-				if (j_ki > j_kj)
-					kj++;
-				if (j_ki < j_kj)
-					ki++;
-			}
-
-			LLT.AL[k] = (globalMatrix.AL[k] - sum_L) / LLT.DI[j];
-			sum_D += LLT.AL[k] * LLT.AL[k];
-		}
-		LLT.DI[i] = sqrt(fabs(globalMatrix.DI[i] - sum_D));
-	}
-}
-
 void FEM::Forward(vector<double>& y, vector<double>& b)
 {
 	for (int i = 0; i < nodeCount; i++)
@@ -571,7 +635,9 @@ double FEM::Scal(vector<double>& x, vector<double>& y)
 {
 	double scal = 0;
 	for (int i = 0; i < nodeCount; i++)
+		//if (x[i] < 10e+40 && y[i] < 10e+40)
 		scal += x[i] * y[i];
+
 	return scal;
 }
 

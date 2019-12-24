@@ -123,13 +123,14 @@ private:
 	vector<double> q;
 	vector<double> edgeBasisValues;
 
+
+	vector<vector<double>> A;
 	vector<Point> CalculateCoords(Triangle& t);
 	void Alpha(Triangle& t);
 	double Det(Triangle& t);
 	double AbsDet(Triangle& t);
 	double Distance(Point a, Point b);
 	int Factorial(int N);
-	void LLTFactorization();
 	void Forward(vector<double>& y, vector<double>& b);
 	void Backward(vector<double>& x, vector<double>& y);
 	void Multiply(vector<double>& x, vector<double>& res);

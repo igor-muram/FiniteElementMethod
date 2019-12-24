@@ -28,16 +28,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\..\..\..\..\data\boundary1.txt">
+    <Text Include="boundary1.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
-    <Text Include="..\..\..\..\..\data\boundary2.txt">
+    <Text Include="points.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
-    <Text Include="..\..\..\..\..\data\points.txt">
+    <Text Include="triangles.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
-    <Text Include="..\..\..\..\..\data\triangles.txt">
+    <Text Include="boundary2.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
   </ItemGroup>
