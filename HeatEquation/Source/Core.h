@@ -131,8 +131,6 @@ private:
 	double AbsDet(Triangle& t);
 	double Distance(Point a, Point b);
 	int Factorial(int N);
-	void Forward(vector<double>& y, vector<double>& b);
-	void Backward(vector<double>& x, vector<double>& y);
 	void Multiply(vector<double>& x, vector<double>& res);
 	double Scal(vector<double>& x, vector<double>& y);
 	void Output();

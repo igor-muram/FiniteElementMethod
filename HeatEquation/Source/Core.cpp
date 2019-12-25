@@ -3,8 +3,6 @@
 #include <iostream>
 #include <iomanip>
 
-
-
 vector<vector<DerComp>> ders = {
 	{ { 0, 13.5, 2, 0, 0 },			{ 0, -9, 1, 0, 0 },			{ 0, 1, 0, 0, 0 } },
 	{ { 1, 13.5, 0, 2, 0 },			{ 1, -9, 0, 1, 0 },			{ 1, 1, 0, 0, 0 } },
@@ -33,8 +31,8 @@ vector<vector<PsiComp>> basis = {
 
 vector<function<double(double, double)>> f = {
 	[](double x, double y) { return 0.0; },
-	[](double x, double y) { return x * x; },
-	[](double x, double y) { return y * y; }
+	[](double x, double y) { return 0.0; },
+	[](double x, double y) { return 0.0; }
 };
 
 vector<double> gamma = { 0, 0, 0 };
@@ -52,7 +50,7 @@ FEM::FEM(string pointsFile, string trianglesFile, string bounds1File, string bou
 	InputBound(bounds1File, bounds2File);
 	CreateLocalPattern();
 	BuildGlobal();
-	//Boundary2();
+	Boundary2();
 	Boundary1();
 	Compute();
 	Output();
@@ -92,7 +90,7 @@ void FEM::InputBound(string bounds1File, string bounds2File)
 		auto a = bound1[i].v1;
 		auto b = bound1[i].v4;
 
-		if (b < a) swap(a, b);
+		if (a > b) swap(a, b);
 
 		bound1[i].v2 = edgeMatrix[a][b];
 		bound1[i].v3 = edgeMatrix[a][b] + 1;
@@ -109,7 +107,7 @@ void FEM::InputBound(string bounds1File, string bounds2File)
 		auto a = bound2[i].v1;
 		auto b = bound2[i].v4;
 
-		if (a < b) swap(a, b);
+		if (a > b) swap(a, b);
 
 		bound2[i].v2 = edgeMatrix[a][b];
 		bound2[i].v3 = edgeMatrix[a][b] + 1;
@@ -465,7 +463,7 @@ void FEM::Compute()
 {
 	vector<double> r, z, Az;
 	int maxiter = 100000;
-	double eps = 1.E-15;
+	double eps = 1.0E-15;
 	r.resize(nodeCount);
 	z.resize(nodeCount);
 	Az.resize(nodeCount);
@@ -554,14 +552,7 @@ void FEM::Alpha(Triangle& t)
 
 double FEM::AbsDet(Triangle& t)
 {
-	double x1 = points[t.verts[0]].x;
-	double y1 = points[t.verts[0]].y;
-	double x2 = points[t.verts[1]].x;
-	double y2 = points[t.verts[1]].y;
-	double x3 = points[t.verts[2]].x;
-	double y3 = points[t.verts[2]].y;
-
-	return abs((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1));
+	return abs(Det(t));
 }
 
 double FEM::Det(Triangle& t)
@@ -584,37 +575,6 @@ int FEM::Factorial(int n)
 	return res;
 }
 
-void FEM::Forward(vector<double>& y, vector<double>& b)
-{
-	for (int i = 0; i < nodeCount; i++)
-	{
-		double sum = 0;
-		int i0 = globalMatrix.IA[i], i1 = globalMatrix.IA[i + 1];
-		for (int k = i0; k < i1; k++)
-		{
-			int j = globalMatrix.JA[k];
-			sum += LLT.AL[k] * y[j];
-		}
-		y[i] = (b[i] - sum) / LLT.DI[i];
-	}
-}
-
-void FEM::Backward(vector<double>& x, vector<double>& y)
-{
-	for (int i = 0; i < nodeCount; i++)
-		x[i] = y[i];
-	for (int i = nodeCount - 1; i >= 0; i--)
-	{
-		int i0 = globalMatrix.IA[i], i1 = globalMatrix.IA[i + 1];
-		x[i] /= LLT.DI[i];
-		for (int k = i0; k < i1; k++)
-		{
-			int j = globalMatrix.JA[k];
-			x[j] -= LLT.AL[k] * x[i];
-		}
-	}
-}
-
 void FEM::Multiply(vector<double>& x, vector<double>& res)
 {
 	for (int i = 0; i < nodeCount; i++)
@@ -633,9 +593,9 @@ void FEM::Multiply(vector<double>& x, vector<double>& res)
 
 double FEM::Scal(vector<double>& x, vector<double>& y)
 {
-	double scal = 0;
+	double scal = 0.0;
 	for (int i = 0; i < nodeCount; i++)
-		//if (x[i] < 10e+40 && y[i] < 10e+40)
+		//if (x[i] < 1e+40 && y[i] < 1e+40)
 		scal += x[i] * y[i];
 
 	return scal;
