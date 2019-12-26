@@ -1,8 +1,5 @@
 #include "Core.h"
 
-#include <iostream>
-#include <iomanip>
-
 vector<vector<DerComp>> ders = {
 	{ { 0, 13.5, 2, 0, 0 },			{ 0, -9, 1, 0, 0 },			{ 0, 1, 0, 0, 0 } },
 	{ { 1, 13.5, 0, 2, 0 },			{ 1, -9, 0, 1, 0 },			{ 1, 1, 0, 0, 0 } },
@@ -58,6 +55,8 @@ FEM::FEM(string pointsFile, string trianglesFile, string bounds1File, string bou
 
 void FEM::InputGrid(string pointsFile, string trianglesFile)
 {
+	basisSize = basis.size();
+
 	ifstream in(pointsFile);
 	in >> nodeCount;
 	points.resize(nodeCount);
@@ -70,7 +69,7 @@ void FEM::InputGrid(string pointsFile, string trianglesFile)
 	triangles.resize(triangleCount);
 	for (int i = 0; i < triangleCount; i++)
 	{
-		triangles[i].verts.resize(10);
+		triangles[i].verts.resize(basisSize);
 		in >> triangles[i].verts[0]
 			>> triangles[i].verts[1]
 			>> triangles[i].verts[2]
@@ -121,18 +120,18 @@ void FEM::AllocateMemory()
 	for (int i = 0; i < nodeCount; i++)
 		edgeMatrix[i].resize(nodeCount);
 
-	localMatrix.resize(10);
-	gPattern.resize(10);
-	mPattern.resize(10);
+	localMatrix.resize(basisSize);
+	gPattern.resize(basisSize);
+	mPattern.resize(basisSize);
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < basisSize; i++)
 	{
-		localMatrix[i].resize(10);
-		gPattern[i].resize(10);
-		mPattern[i].resize(10);
+		localMatrix[i].resize(basisSize);
+		gPattern[i].resize(basisSize);
+		mPattern[i].resize(basisSize);
 	}
 
-	localB.resize(10);
+	localB.resize(basisSize);
 	alpha.resize(6);
 }
 
@@ -173,8 +172,7 @@ void FEM::Portrait()
 	MatrixPortrait connection(nodeCount);
 
 	for (auto& t : triangles)
-	{
-		for (int i = 1; i < 10; i++)
+		for (int i = 1; i < basisSize; i++)
 			for (int j = 0; j < i; j++)
 			{
 				auto a = t.verts[i];
@@ -183,7 +181,7 @@ void FEM::Portrait()
 
 				connection[a].insert(b);
 			}
-	}
+
 
 	globalMatrix.N = nodeCount;
 	globalMatrix.IA.resize(nodeCount + 1);
@@ -213,9 +211,8 @@ void FEM::Portrait()
 
 void FEM::CreateLocalPattern()
 {
-	for (int i = 0; i < 10; i++)
-	{
-		for (int j = 0; j < 10; j++)
+	for (int i = 0; i < basisSize; i++)
+		for (int j = 0; j < basisSize; j++)
 		{
 			for (auto& x : ders[i])
 				for (auto& y : ders[j])
@@ -240,7 +237,6 @@ void FEM::CreateLocalPattern()
 				}
 			mPattern[i][j] = sum;
 		}
-	}
 }
 
 void FEM::BuildLocalMatrix(Triangle& t)
@@ -254,9 +250,8 @@ void FEM::BuildLocalMatrix(Triangle& t)
 		{ alpha[4], alpha[5] }
 	};
 
-	for (int i = 0; i < 10; i++)
-	{
-		for (int j = 0; j < 10; j++)
+	for (int i = 0; i < basisSize; i++)
+		for (int j = 0; j < basisSize; j++)
 		{
 			double sum = 0;
 			for (auto comp : gPattern[i][j])
@@ -266,7 +261,6 @@ void FEM::BuildLocalMatrix(Triangle& t)
 			}
 			localMatrix[i][j] = (gamma[t.materialNo] * mPattern[i][j] + lambda[t.materialNo] * sum) * D;
 		}
-	}
 }
 
 void FEM::BuildLocalB(Triangle& t)
@@ -275,13 +269,13 @@ void FEM::BuildLocalB(Triangle& t)
 	double D = AbsDet(t);
 
 	fill(localB.begin(), localB.end(), 0.0);
-	vector<double> temp(10);
-	for (int i = 0; i < 10; i++)
+	vector<double> temp(basisSize);
+	for (int i = 0; i < basisSize; i++)
 		temp[i] = f[t.materialNo](coords[i].x, coords[i].y);
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < basisSize; i++)
 	{
-		for (int j = 0; j < 10; j++)
+		for (int j = 0; j < basisSize; j++)
 			localB[i] += temp[j] * mPattern[i][j];
 
 		localB[i] *= D;
@@ -290,7 +284,7 @@ void FEM::BuildLocalB(Triangle& t)
 
 void FEM::AddLocalToGlobal(Triangle& t)
 {
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < basisSize; i++)
 	{
 		globalMatrix.DI[t.verts[i]] += localMatrix[i][i];
 		globalB[t.verts[i]] += localB[i];
@@ -310,111 +304,16 @@ void FEM::AddLocalToGlobal(Triangle& t)
 			}
 		}
 	}
-
-	/*-----------------------------------Tight format---------------------------------------*/
-	for (int i = 0; i < 10; i++)
-	{
-		//globalB[t.verts[i]] += localB[i];
-		for (int j = 0; j < 10; j++)
-		{
-			A[t.verts[i]][t.verts[j]] += localMatrix[i][j];
-		}
-	}
 }
 
 void FEM::BuildGlobal()
 {
-	/*---------------------------------For debug-----------------------------------------*/
-	A.resize(nodeCount);
-	for (int i = 0; i < nodeCount; i++)
-	{
-		A[i].resize(nodeCount);
-	}
-	/*---------------------------------For debug-----------------------------------------*/
-
 	for (auto& t : triangles)
 	{
 		BuildLocalMatrix(t);
-
-		/*---------------------------------For debug-----------------------------------------*/
-		vector<double> aa = { -1, -1, 1, -1, -1, -1.0 / 3, 1.0 / 3, -1.0 / 3, 1.0 / 3, -1.0 / 3 };
-		vector<double> b(10, 0.0);
-
-		for (int i = 0; i < 10; i++)
-		{
-			for (int j = 0; j < 10; j++)
-			{
-				b[i] += aa[j] * localMatrix[i][j];
-			}
-		}
-		/*---------------------------------For debug-----------------------------------------*/
-
 		BuildLocalB(t);
 		AddLocalToGlobal(t);
 	}
-
-	/*---------------------------------For debug-----------------------------------------*/
-	vector<vector<double>> A1;
-	A1.resize(nodeCount);
-	for (int i = 0; i < nodeCount; i++)
-	{
-		A1[i].resize(nodeCount);
-	}
-
-	for (int i = 0; i < nodeCount; i++)
-		A1[i][i] = globalMatrix.DI[i];
-
-	for (int i = 0; i < nodeCount; i++)
-	{
-		int i0 = globalMatrix.IA[i], i1 = globalMatrix.IA[i + 1];
-
-		for (int k = i0; k < i1; k++)
-		{
-			int j = globalMatrix.JA[k];
-			A1[i][j] = globalMatrix.AL[k];
-			A1[j][i] = globalMatrix.AL[k];
-		}
-	}
-
-	for (int i = 0; i < nodeCount; i++)
-	{
-		for (int j = 0; j < nodeCount; j++)
-			cout << A1[i][j] << "\t";
-
-		cout << endl;
-	}
-	cout << endl << endl;
-	for (int i = 0; i < nodeCount; i++)
-	{
-		double sum = 0;
-		for (int j = 0; j < nodeCount; j++)
-			sum += A1[i][j];
-
-		cout << sum << endl;
-	}
-	cout << endl << endl;
-	cout << endl << endl << endl << endl;
-
-
-	for (int i = 0; i < nodeCount; i++)
-	{
-		for (int j = 0; j < nodeCount; j++)
-			cout << A[i][j] << "\t";
-
-		cout << endl;
-	}
-	cout << endl << endl;
-
-	for (int i = 0; i < nodeCount; i++)
-	{
-		double sum = 0;
-		for (int j = 0; j < nodeCount; j++)
-			sum += A[i][j];
-
-		cout << sum << endl;
-	}
-	cout << endl << endl;
-	/*---------------------------------For debug-----------------------------------------*/
 }
 
 void FEM::Boundary1()
@@ -468,13 +367,6 @@ void FEM::Compute()
 	z.resize(nodeCount);
 	Az.resize(nodeCount);
 
-	/*---------------------------------For debug-----------------------------------------*/
-	vector<double> aa = { -1, -1, 1, 1, -1, -1, 1.0 / 3, -1.0 / 3, -1.0 / 3, 1.0 / 3, -1.0 / 3, -1.0 / 3, 1.0 / 3, 1.0, 1, 1.0 / 3 };
-
-	//Multiply(aa, q);
-	/*---------------------------------For debug-----------------------------------------*/
-
-
 	// r = A*x
 	Multiply(q, r);
 
@@ -485,7 +377,7 @@ void FEM::Compute()
 		z[i] = r[i];
 	}
 
-	double normB = 1;//sqrt(fabs(Scal(globalB, globalB)));
+	double normB = 1;
 	double scal_rr = Scal(r, r);
 	double diff = sqrt(fabs(scal_rr)) / normB;
 	int iter = 0;
@@ -595,7 +487,6 @@ double FEM::Scal(vector<double>& x, vector<double>& y)
 {
 	double scal = 0.0;
 	for (int i = 0; i < nodeCount; i++)
-		//if (x[i] < 1e+40 && y[i] < 1e+40)
 		scal += x[i] * y[i];
 
 	return scal;

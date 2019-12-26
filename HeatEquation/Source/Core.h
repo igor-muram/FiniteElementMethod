@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <set>
 #include <functional>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -103,6 +105,7 @@ private:
 	int nodeCount;
 	int edgeCount1;
 	int edgeCount2;
+	int basisSize;
 
 	vector<Point> points;
 	vector<Triangle> triangles;
@@ -117,14 +120,11 @@ private:
 	vector<int> materials;
 	LocalMatrix localMatrix;
 	Matrix globalMatrix;
-	Matrix LLT;
 	vector<double> localB;
 	vector<double> globalB;
 	vector<double> q;
 	vector<double> edgeBasisValues;
 
-
-	vector<vector<double>> A;
 	vector<Point> CalculateCoords(Triangle& t);
 	void Alpha(Triangle& t);
 	double Det(Triangle& t);
