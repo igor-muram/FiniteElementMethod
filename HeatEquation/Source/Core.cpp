@@ -4,12 +4,14 @@ vector<vector<DerComp>> ders = {
 	{ { 0, 13.5, 2, 0, 0 },			{ 0, -9, 1, 0, 0 },			{ 0, 1, 0, 0, 0 } },
 	{ { 1, 13.5, 0, 2, 0 },			{ 1, -9, 0, 1, 0 },			{ 1, 1, 0, 0, 0 } },
 	{ { 2, 13.5, 0, 0, 2 },			{ 2, -9, 0, 0, 1 },			{ 2, 1, 0, 0, 0 } },
-	{ { 0, 27, 1, 1, 0 },			{ 0, -4.5, 0, 1, 0 },		{ 1, 13.5, 2, 0, 0 },		{ 1, -4.5, 1, 0, 0 } },
-	{ { 0, 13.5, 0, 2, 0 },			{ 0, -4.5, 0, 1, 0 },		{ 1, 27, 1, 1, 0 },			{ 1, -4.5, 1, 0, 0 } },
-	{ { 1, 27, 0, 1, 1 },			{ 1, -4.5, 0, 0, 1 },		{ 2, 13.5, 0, 2, 0 },		{ 2, -4.5, 0, 1, 0 } },
-	{ { 1, 13.5, 0, 0, 2 },			{ 1, -4.5, 0, 0, 1 },		{ 2, 27, 0, 1, 1 },			{ 2, -4.5, 0, 1, 0 } },
-	{ { 0, 13.5, 0, 0, 2 },			{ 0, -4.5, 0, 0, 1 },		{ 2, 27, 1, 0, 1 },			{ 2, -4.5, 1, 0, 0 } },
-	{ { 0, 27, 1, 0, 1 },			{ 0, -4.5, 0, 0, 1 },		{ 2, 13.5, 2, 0, 0 },		{ 2, -4.5, 1, 0, 0 } },
+	{ { 0, 27, 1, 1, 0 },			{ 0, -4.5, 0, 1, 0 },		{ 1, 13.5, 2, 0, 0 },		{ 1, -4.5, 1, 0, 0 } }, // 4
+	{ { 0, 13.5, 0, 2, 0 },			{ 0, -4.5, 0, 1, 0 },		{ 1, 27, 1, 1, 0 },			{ 1, -4.5, 1, 0, 0 } }, // 5
+
+	{ { 0, 27, 1, 0, 1 },			{ 0, -4.5, 0, 0, 1 },		{ 2, 13.5, 2, 0, 0 },		{ 2, -4.5, 1, 0, 0 } }, // 9
+	{ { 0, 13.5, 0, 0, 2 },			{ 0, -4.5, 0, 0, 1 },		{ 2, 27, 1, 0, 1 },			{ 2, -4.5, 1, 0, 0 } }, // 8
+
+	{ { 1, 27, 0, 1, 1 },			{ 1, -4.5, 0, 0, 1 },		{ 2, 13.5, 0, 2, 0 },		{ 2, -4.5, 0, 1, 0 } }, // 6
+	{ { 1, 13.5, 0, 0, 2 },			{ 1, -4.5, 0, 0, 1 },		{ 2, 27, 0, 1, 1 },			{ 2, -4.5, 0, 1, 0 } }, // 7
 	{ { 0, 27, 0, 1, 1 },			{ 1, 27, 1, 0, 1 },			{ 2, 27, 1, 1, 0 } }
 };
 
@@ -19,21 +21,24 @@ vector<vector<PsiComp>> basis = {
 	{ { 4.5, 0, 0, 3 },         { -4.5, 0, 0, 2 },       { 1, 0, 0, 1 } },
 	{ { 13.5, 2, 1, 0 },        { -4.5, 1, 1, 0 } },
 	{ { 13.5, 1, 2, 0 },        { -4.5, 1, 1, 0 } },
-	{ { 13.5, 0, 2, 1 },        { -4.5, 0, 1, 1 } },
-	{ { 13.5, 0, 1, 2 },		{ -4.5, 0, 1, 1 } },
-	{ { 13.5, 1, 0, 2 },        { -4.5, 1, 0, 1 } },
+
 	{ { 13.5, 2, 0, 1 },        { -4.5, 1, 0, 1 } },
+	{ { 13.5, 1, 0, 2 },        { -4.5, 1, 0, 1 } },
+
+	{ { 13.5, 0, 2, 1 },        { -4.5, 0, 1, 1 } },
+	{ { 13.5, 0, 1, 2 },	    { -4.5, 0, 1, 1 } },
 	{ { 27, 1, 1, 1 } }
 };
 
 vector<function<double(double, double)>> f = {
 	[](double x, double y) { return 0.0; },
-	[](double x, double y) { return 0.0; },
-	[](double x, double y) { return 0.0; }
+	[](double x, double y) { return -2.0; },
+	[](double x, double y) { return -6.0 * x; },
+	[](double x, double y) { return -12.0 * x * x; }
 };
 
-vector<double> gamma = { 0, 0, 0 };
-vector<double> lambda = { 1, 1, 1 };
+vector<double> gamma = { 0, 0, 0, 0 };
+vector<double> lambda = { 1, 1, 1, 1 };
 vector<double> uValue = { -1, 1 };
 vector<double> thetaValue = { 0, 0, 0 };
 vector<double> edgeBasisValues = { 0.125, 0.125, 0.375, 0.375 };
@@ -56,7 +61,6 @@ FEM::FEM(string pointsFile, string trianglesFile, string bounds1File, string bou
 void FEM::InputGrid(string pointsFile, string trianglesFile)
 {
 	basisSize = basis.size();
-
 	ifstream in(pointsFile);
 	in >> nodeCount;
 	points.resize(nodeCount);
@@ -88,14 +92,13 @@ void FEM::InputBound(string bounds1File, string bounds2File)
 		in >> bound1[i].v1 >> bound1[i].v4 >> bound1[i].valueNo;
 		auto a = bound1[i].v1;
 		auto b = bound1[i].v4;
+		bool f = a > b;
+		if (f) swap(a, b);
 
-		if (a > b) swap(a, b);
-
-		bound1[i].v2 = edgeMatrix[a][b];
-		bound1[i].v3 = edgeMatrix[a][b] + 1;
+		bound1[i].v2 = edgeMatrix[a][b] + (f ? 0 : 1);
+		bound1[i].v3 = edgeMatrix[a][b] + (f ? 1 : 0);
 	}
 	in.close();
-
 
 	in.open(bounds2File);
 	in >> edgeCount2;
@@ -105,11 +108,11 @@ void FEM::InputBound(string bounds1File, string bounds2File)
 		in >> bound2[i].v1 >> bound2[i].v4 >> bound2[i].valueNo;
 		auto a = bound2[i].v1;
 		auto b = bound2[i].v4;
+		bool f = a > b;
+		if (f) swap(a, b);
 
-		if (a > b) swap(a, b);
-
-		bound2[i].v2 = edgeMatrix[a][b];
-		bound2[i].v3 = edgeMatrix[a][b] + 1;
+		bound2[i].v2 = edgeMatrix[a][b] + (f ? 0 : 1);
+		bound2[i].v3 = edgeMatrix[a][b] + (f ? 1 : 0);
 	}
 	in.close();
 }
@@ -117,9 +120,6 @@ void FEM::InputBound(string bounds1File, string bounds2File)
 void FEM::AllocateMemory()
 {
 	edgeMatrix.resize(nodeCount);
-	for (int i = 0; i < nodeCount; i++)
-		edgeMatrix[i].resize(nodeCount);
-
 	localMatrix.resize(basisSize);
 	gPattern.resize(basisSize);
 	mPattern.resize(basisSize);
@@ -150,16 +150,16 @@ void FEM::VertexNumbering()
 
 				if (edgeMatrix[a][b] == 0)
 				{
-					t.verts[index] = nodeCount + (f ? 0 : 1);
-					t.verts[index + 1] = nodeCount + (f ? 1 : 0);
+					t.verts[index] = nodeCount + (f ? 1 : 0);
+					t.verts[index + 1] = nodeCount + (f ? 0 : 1);
 					edgeMatrix[a][b] = nodeCount;
 					nodeCount += 2;
 				}
 				else
 				{
 					int a1 = edgeMatrix[a][b];
-					t.verts[index] = a1 + (f ? 0 : 1);
-					t.verts[index + 1] = a1 + (f ? 1 : 0);
+					t.verts[index] = a1 + (f ? 1 : 0);
+					t.verts[index + 1] = a1 + (f ? 0 : 1);
 				}
 			}
 		t.verts[index] = nodeCount;
@@ -181,7 +181,6 @@ void FEM::Portrait()
 
 				connection[a].insert(b);
 			}
-
 
 	globalMatrix.N = nodeCount;
 	globalMatrix.IA.resize(nodeCount + 1);
@@ -239,6 +238,24 @@ void FEM::CreateLocalPattern()
 		}
 }
 
+int FEM::Factorial(int n)
+{
+	int res = 1;
+	for (int i = 2; i <= n; i++)
+		res *= i;
+	return res;
+}
+
+void FEM::BuildGlobal()
+{
+	for (auto& t : triangles)
+	{
+		BuildLocalMatrix(t);
+		BuildLocalB(t);
+		AddLocalToGlobal(t);
+	}
+}
+
 void FEM::BuildLocalMatrix(Triangle& t)
 {
 	double D = AbsDet(t);
@@ -263,6 +280,42 @@ void FEM::BuildLocalMatrix(Triangle& t)
 		}
 }
 
+void FEM::Alpha(Triangle& t)
+{
+	double x1 = points[t.verts[0]].x;
+	double y1 = points[t.verts[0]].y;
+	double x2 = points[t.verts[1]].x;
+	double y2 = points[t.verts[1]].y;
+	double x3 = points[t.verts[2]].x;
+	double y3 = points[t.verts[2]].y;
+
+	double D = Det(t);
+
+	alpha[0] = (y2 - y3) / D;
+	alpha[1] = (x3 - x2) / D;
+	alpha[2] = (y3 - y1) / D;
+	alpha[3] = (x1 - x3) / D;
+	alpha[4] = (y1 - y2) / D;
+	alpha[5] = (x2 - x1) / D;
+}
+
+double FEM::Det(Triangle& t)
+{
+	double x1 = points[t.verts[0]].x;
+	double y1 = points[t.verts[0]].y;
+	double x2 = points[t.verts[1]].x;
+	double y2 = points[t.verts[1]].y;
+	double x3 = points[t.verts[2]].x;
+	double y3 = points[t.verts[2]].y;
+
+	return (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
+}
+
+double FEM::AbsDet(Triangle& t)
+{
+	return abs(Det(t));
+}
+
 void FEM::BuildLocalB(Triangle& t)
 {
 	vector<Point> coords = CalculateCoords(t);
@@ -280,6 +333,28 @@ void FEM::BuildLocalB(Triangle& t)
 
 		localB[i] *= D;
 	}
+}
+
+vector<Point> FEM::CalculateCoords(Triangle& t)
+{
+	Point t1 = points[t.verts[0]];
+	Point t2 = points[t.verts[1]];
+	Point t3 = points[t.verts[2]];
+
+	vector<Point> coords;
+
+	coords.push_back(t1);
+	coords.push_back(t2);
+	coords.push_back(t3);
+	coords.push_back(((t2 / 2.0) + t1) * 2.0 / 3.0);
+	coords.push_back(((t2 * 2.0) + t1) / 3.0);
+	coords.push_back(((t3 / 2.0) + t1) * 2.0 / 3.0);
+	coords.push_back(((t3 * 2.0) + t1) / 3.0);
+	coords.push_back(((t3 / 2.0) + t2) * 2.0 / 3.0);
+	coords.push_back(((t3 * 2.0) + t2) / 3.0);
+	coords.push_back((t1 + t2 + t3) / 3.0);
+
+	return coords;
 }
 
 void FEM::AddLocalToGlobal(Triangle& t)
@@ -303,31 +378,6 @@ void FEM::AddLocalToGlobal(Triangle& t)
 				globalMatrix.AL[index] += localMatrix[i][j];
 			}
 		}
-	}
-}
-
-void FEM::BuildGlobal()
-{
-	for (auto& t : triangles)
-	{
-		BuildLocalMatrix(t);
-		BuildLocalB(t);
-		AddLocalToGlobal(t);
-	}
-}
-
-void FEM::Boundary1()
-{
-	for (auto edge : bound1)
-	{
-		globalMatrix.DI[edge.v1] = 1.0E+50;
-		globalB[edge.v1] = 1.0E+50 * uValue[edge.valueNo];
-		globalMatrix.DI[edge.v2] = 1.0E+50;
-		globalB[edge.v2] = 1.0E+50 * uValue[edge.valueNo];
-		globalMatrix.DI[edge.v3] = 1.0E+50;
-		globalB[edge.v3] = 1.0E+50 * uValue[edge.valueNo];
-		globalMatrix.DI[edge.v4] = 1.0E+50;
-		globalB[edge.v4] = 1.0E+50 * uValue[edge.valueNo];
 	}
 }
 
@@ -358,11 +408,26 @@ double FEM::Distance(Point a, Point b)
 	return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 }
 
+void FEM::Boundary1()
+{
+	for (auto edge : bound1)
+	{
+		globalMatrix.DI[edge.v1] = 1.0E+50;
+		globalB[edge.v1] = 1.0E+50 * uValue[edge.valueNo];
+		globalMatrix.DI[edge.v2] = 1.0E+50;
+		globalB[edge.v2] = 1.0E+50 * uValue[edge.valueNo];
+		globalMatrix.DI[edge.v3] = 1.0E+50;
+		globalB[edge.v3] = 1.0E+50 * uValue[edge.valueNo];
+		globalMatrix.DI[edge.v4] = 1.0E+50;
+		globalB[edge.v4] = 1.0E+50 * uValue[edge.valueNo];
+	}
+}
+
 void FEM::Compute()
 {
 	vector<double> r, z, Az;
 	int maxiter = 100000;
-	double eps = 1.0E-15;
+	double eps = 1.E-30;
 	r.resize(nodeCount);
 	z.resize(nodeCount);
 	Az.resize(nodeCount);
@@ -377,7 +442,7 @@ void FEM::Compute()
 		z[i] = r[i];
 	}
 
-	double normB = 1;
+	double normB = 1.0;
 	double scal_rr = Scal(r, r);
 	double diff = sqrt(fabs(scal_rr)) / normB;
 	int iter = 0;
@@ -399,72 +464,6 @@ void FEM::Compute()
 
 		diff = sqrt(fabs(Scal(r, r))) / normB;
 	}
-}
-
-vector<Point> FEM::CalculateCoords(Triangle& t)
-{
-	Point t1 = points[t.verts[0]];
-	Point t2 = points[t.verts[1]];
-	Point t3 = points[t.verts[2]];
-
-	vector<Point> coords;
-
-	coords.push_back(t1);
-	coords.push_back(t2);
-	coords.push_back(t3);
-	coords.push_back(((t2 / 2.0) + t1) * 2.0 / 3.0);
-	coords.push_back(((t2 * 2.0) + t1) / 3.0);
-	coords.push_back(((t3 / 2.0) + t1) * 2.0 / 3.0);
-	coords.push_back(((t3 * 2.0) + t1) / 3.0);
-	coords.push_back(((t3 / 2.0) + t2) * 2.0 / 3.0);
-	coords.push_back(((t3 * 2.0) + t2) / 3.0);
-	coords.push_back((t1 + t2 + t3) / 3.0);
-
-	return coords;
-}
-
-void FEM::Alpha(Triangle& t)
-{
-	double x1 = points[t.verts[0]].x;
-	double y1 = points[t.verts[0]].y;
-	double x2 = points[t.verts[1]].x;
-	double y2 = points[t.verts[1]].y;
-	double x3 = points[t.verts[2]].x;
-	double y3 = points[t.verts[2]].y;
-
-	double D = Det(t);
-
-	alpha[0] = (y2 - y3) / D;
-	alpha[1] = (x3 - x2) / D;
-	alpha[2] = (y3 - y1) / D;
-	alpha[3] = (x1 - x3) / D;
-	alpha[4] = (y1 - y2) / D;
-	alpha[5] = (x2 - x1) / D;
-}
-
-double FEM::AbsDet(Triangle& t)
-{
-	return abs(Det(t));
-}
-
-double FEM::Det(Triangle& t)
-{
-	double x1 = points[t.verts[0]].x;
-	double y1 = points[t.verts[0]].y;
-	double x2 = points[t.verts[1]].x;
-	double y2 = points[t.verts[1]].y;
-	double x3 = points[t.verts[2]].x;
-	double y3 = points[t.verts[2]].y;
-
-	return (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
-}
-
-int FEM::Factorial(int n)
-{
-	int res = 1;
-	for (int i = 2; i <= n; i++)
-		res *= i;
-	return res;
 }
 
 void FEM::Multiply(vector<double>& x, vector<double>& res)

@@ -1,8 +1,10 @@
+#pragma once
 #include <fstream>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <map>
 #include <functional>
 #include <iostream>
 #include <iomanip>
@@ -79,7 +81,7 @@ typedef vector<vector<vector<LocalComp>>> GPattern;
 typedef vector<vector<double>> MPattern;
 typedef vector<vector<double>> LocalMatrix;
 typedef vector<set<int>> MatrixPortrait;
-typedef vector<vector<int>> EdgeMatrix;
+typedef vector<map<int, int>> EdgeMatrix;
 
 class FEM
 {
