@@ -123,10 +123,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Matrix.h" />
     <ClCompile Include="Source\Core.cpp" />
     <ClCompile Include="Source\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Boundary.h" />
+    <ClInclude Include="Source\FEMInfo.h" />
+    <ClInclude Include="Source\Layer.h" />
+    <ClInclude Include="Source\LOS.h" />
+    <ClInclude Include="Source\Math.h" />
+    <ClInclude Include="Source\MeshBuilder.h" />
+    <ClInclude Include="Source\PortraitBuilder.h" />
+    <ClInclude Include="Source\SLAEBuilder.h" />
     <ClInclude Include="Source\Core.h" />
   </ItemGroup>
   <ItemGroup>
