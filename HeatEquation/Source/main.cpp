@@ -9,7 +9,6 @@
 #include "SLAEBuilder.h"
 
 #include "Solver.h"
-
 #include "Layer.h"
 
 #include <string>
@@ -62,6 +61,7 @@ void InputTime(string timeFile, vector<Interval>& time_intervals)
 	}
 	in.close();
 }
+
 //void InputBound(string bounds1File, string bounds2File)
 //{
 //	ifstream in(bounds1File);
@@ -138,7 +138,7 @@ int main()
 	builder.SetLayer(layer);
 	builder.Build(A, b);
 
-	// Учет краевых
+	// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
 	Solvers::BCG(A, q1, b);
 	
@@ -154,7 +154,7 @@ int main()
 	builder.SetLayer(layer);
 	builder.Build(A, b);
 
-	// Учет краевых
+	// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
 	Solvers::BCG(A, q2, b);
 
@@ -173,7 +173,7 @@ int main()
 
 		vector<double> q(nodeCount);
 
-		// Учет краевых
+		// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
 		Solvers::BCG(A, q, b);
 

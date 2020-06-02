@@ -11,6 +11,7 @@ struct Matrix
 	vector<int> IA, JA;
 	vector<double> DI, AL;
 
+
 	double& operator()(int i, int j)
 	{
 		if (i >= N || j >= N || i < 0 || j < 0)

@@ -61,6 +61,7 @@ public:
 
 		cs.push_back(-dt0 / (dt * dt1));
 		cs.push_back(dt / (dt1 * dt0));
+
 	}
 
 	void SetQ(vector<vector<double>*> q)

@@ -44,6 +44,7 @@ public:
 		b[nodeCount - 1] = u2 * 1.0e+50;
 	}
 
+
 	void SetLayer(Layer* layer)
 	{
 		this->layer = layer;
@@ -146,6 +147,7 @@ private:
 			for (int i = 0; i < size; i++)
 				for (int j = 0; j < basisSize; j++)
 					localb[i] += Cs[i] * (*Qs[i])[e.verts[j]] * M[i][j];
+
 
 			localb[i] *= D;
 		}
