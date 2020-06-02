@@ -13,7 +13,8 @@ using namespace std;
 class SLAEBuilder
 {
 public:
-	SLAEBuilder(vector<Point>& points, vector<FiniteElement>& elements) : 
+	SLAEBuilder(vector<Point>& points, vector<FiniteElement>& elements, int nodeCount) : 
+		nodeCount(nodeCount),
 		points(points), 
 		elements(elements), 
 		layer(layer)
@@ -34,6 +35,16 @@ public:
 			}
 	}
 
+	void Boundary(Matrix& A, vector<double>& b, double u1, double u2)
+	{
+		A(0, 0) = 1.0e+50;
+		b[0] = u1 * 1.0e+50;
+
+		A(nodeCount - 1, nodeCount - 1) = 1.0e+50;
+		b[nodeCount - 1] = u2 * 1.0e+50;
+	}
+
+
 	void SetLayer(Layer* layer)
 	{
 		this->layer = layer;
@@ -42,6 +53,7 @@ public:
 private:
 	vector<Point>& points;
 	vector<FiniteElement>& elements;
+	int nodeCount;
 
 	Layer* layer;
 
@@ -134,7 +146,8 @@ private:
 
 			for (int i = 0; i < size; i++)
 				for (int j = 0; j < basisSize; j++)
-					localb[i] += Cs[i] * (*Qs[i])[j] * M[i][j];
+					localb[i] += Cs[i] * (*Qs[i])[e.verts[j]] * M[i][j];
+
 
 			localb[i] *= D;
 		}

@@ -3,9 +3,12 @@
 #include "Matrix.h"
 
 #include "MeshBuilder.h"
+#include "Interval.h"
+#include "TimeMeshBuilder.h"
 #include "PortraitBuilder.h"
 #include "SLAEBuilder.h"
 
+#include "Solver.h"
 #include "Layer.h"
 
 #include <string>
@@ -40,6 +43,21 @@ void InputGrid(
 			>> elements[i].verts[1]
 			>> elements[i].verts[2]
 			>> elements[i].materialNo;
+	}
+	in.close();
+}
+
+void InputTime(string timeFile, vector<Interval>& time_intervals)
+{
+	ifstream in(timeFile);
+
+	int time_count;
+	in >> time_count;
+	for (int i = 0; i < time_count; i++)
+	{
+		Interval interval;
+		in >> interval;
+		time_intervals.push_back(interval);
 	}
 	in.close();
 }
@@ -91,6 +109,12 @@ int main()
 	mesh.Build(elements);
 	nodeCount = mesh.nodeCount;
 
+	vector<Interval> time_intervals;
+	InputTime("time.txt", time_intervals);
+	TimeMeshBuilder time(time_intervals);
+
+	const vector<double> t = time.getMesh();
+
 	Matrix A;
 	PortraitBuilder portrait(nodeCount, elements);
 	portrait.Build(A);
@@ -99,18 +123,64 @@ int main()
 
 	SLAEBuilder builder(points, elements);
 
-	vector<double> q0(nodeCount);
+	vector<double> q0(nodeCount), q1(nodeCount), q2(nodeCount);
 	vector<vector<double>*> Qs;
+
+	for (int i = 0; i < A.N; i++)
+		q0.push_back(u(points[i].x, points[i].y, t[0]));
+
 	Qs.push_back(&q0);
 	Layer* layer = new TwoLayer();
 
-	layer->SetQ({ &q0 });
-	layer->SetT({ 1.0 });
+	layer->SetQ({ Qs[0] });
+	layer->SetT({ t[0], t[1] });
 
 	builder.SetLayer(layer);
 	builder.Build(A, b);
+
+	// ���� �������
+
+	Solvers::BCG(A, q1, b);
 	
 	A.Clear();
+
+	Qs.push_back(&q1);
+
+	Layer* layer = new ThreeLayer();
+
+	layer->SetQ({ Qs[0], Qs[1] });
+	layer->SetT({ t[0], t[1], t[2] });
+
+	builder.SetLayer(layer);
+	builder.Build(A, b);
+
+	// ���� �������
+
+	Solvers::BCG(A, q2, b);
+
+	A.Clear();
+
+	Qs.push_back(&q2);
+
+	Layer* layer = new FourLayer();
+	for (int i = 3; i < t.size(); i++)
+	{
+		layer->SetQ({ Qs[i - 2], Qs[i - 1], Qs[i] });
+		layer->SetT({ t[i - 3], t[i - 2], t[i - 1], t[i] });
+
+		builder.SetLayer(layer);
+		builder.Build(A, b);
+
+		vector<double> q(nodeCount);
+
+		// ���� �������
+
+		Solvers::BCG(A, q, b);
+
+		A.Clear();
+
+		Qs.push_back(&q);
+	}
 
 	system("pause");
 	return 0;
