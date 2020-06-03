@@ -3,13 +3,14 @@
 #include <vector>
 #include <map>
 #include "FEMInfo.h"
+#include "Boundary.h"
 
 using namespace std;
 
 class MeshBuilder
 {
 public:
-	MeshBuilder(int nodeCount): nodeCount(nodeCount)
+	MeshBuilder(int nodeCount) : nodeCount(nodeCount)
 	{
 		edgeMatrix.resize(nodeCount);
 	}
@@ -43,6 +44,20 @@ public:
 				}
 			e.verts[index] = nodeCount;
 			nodeCount++;
+		}
+	}
+
+	void BuildBoundary(vector<Edge>& edges)
+	{
+		for (auto& edge : edges)
+		{
+			auto a = edge.v1;
+			auto b = edge.v4;
+			bool f = a > b;
+			if (f) swap(a, b);
+
+			edge.v2 = edgeMatrix[a][b] + (f ? 0 : 1);
+			edge.v3 = edgeMatrix[a][b] + (f ? 1 : 0);
 		}
 	}
 

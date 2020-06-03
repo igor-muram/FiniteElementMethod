@@ -19,7 +19,7 @@ namespace Solvers
 
 	struct RawMatrix
 	{
-		int N;
+		int N = 0;
 		double* DI = nullptr;
 		double* AL = nullptr;
 		double* AU = nullptr;
@@ -56,7 +56,7 @@ namespace Solvers
 		double lastdiff = 0;
 
 		x.resize(A.N);
-		return BCG_LU(Raw, x.data(), b.data(), LU, aux, 20000, 1.0e-7);
+		return BCG_LU(Raw, x.data(), b.data(), LU, aux, 20000, 1.0e-14);
 	}
 
 	void Multiply(RawMatrix& A, double* vec, double* res)

@@ -20,9 +20,9 @@ public:
 protected:
 	vector<vector<double>*> qs;
 	vector<double> cs;
-	double c;
+	double c = 0.0;
 
-	int size;
+	int size = 0;
 };
 
 class TwoLayer : public Layer
@@ -61,7 +61,6 @@ public:
 
 		cs.push_back(-dt0 / (dt * dt1));
 		cs.push_back(dt / (dt1 * dt0));
-
 	}
 
 	void SetQ(vector<vector<double>*> q)
@@ -72,7 +71,7 @@ public:
 	}
 
 private:
-	double dt, dt0, dt1;
+	double dt = 0.0, dt0 = 0.0, dt1 = 0.0;
 };
 
 class FourLayer : public Layer
@@ -109,7 +108,7 @@ public:
 	}
 
 private:
-	double dt01, dt02, dt03, dt12, dt13, dt23;
+	double dt01 = 0.0, dt02 = 0.0, dt03 = 0.0, dt12 = 0.0, dt13 = 0.0, dt23 = 0.0;
 };
 
 

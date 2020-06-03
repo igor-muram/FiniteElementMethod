@@ -8,15 +8,16 @@
 
 #include <vector>
 #include <algorithm>
+#include <functional>
+
 using namespace std;
 
 class SLAEBuilder
 {
 public:
-	SLAEBuilder(vector<Point>& points, vector<FiniteElement>& elements, int nodeCount) : 
-		nodeCount(nodeCount),
-		points(points), 
-		elements(elements), 
+	SLAEBuilder(vector<Point>& points, vector<FiniteElement>& elements) :
+		points(points),
+		elements(elements),
 		layer(layer)
 	{
 		local.resize(basisSize, vector<double>(basisSize));
@@ -25,47 +26,53 @@ public:
 		BuildPatterns();
 	}
 
-	void Build(Matrix& A, vector<double>& b)
+	bool Build(Matrix& A, vector<double>& b, double t)
 	{
-			for (auto& e : elements)
-			{
-				BuildLocalMatrix(e);
-				BuildLocalB(e);
-				AddLocalToGlobal(A, b, e);
-			}
+		if (lambda == nullptr || gamma == nullptr || f == nullptr)
+			return false;
+
+		for (auto& e : elements)
+		{
+			BuildLocalMatrix(e);
+			BuildLocalB(e, t);
+			AddLocalToGlobal(A, b, e);
+		}
+
+		return true;
 	}
-
-	void Boundary(Matrix& A, vector<double>& b, double u1, double u2)
-	{
-		A(0, 0) = 1.0e+50;
-		b[0] = u1 * 1.0e+50;
-
-		A(nodeCount - 1, nodeCount - 1) = 1.0e+50;
-		b[nodeCount - 1] = u2 * 1.0e+50;
-	}
-
 
 	void SetLayer(Layer* layer)
 	{
 		this->layer = layer;
 	}
+	void ClearLayer()
+	{
+		this->layer = nullptr;
+	}
+
+	void SetLambda(vector<double>* lambda) { this->lambda = lambda; }
+	void SetGamma(vector<double>* gamma) { this->gamma = gamma; }
+	void SetF(function<double(double, double, double)>* f) { this->f = f; }
 
 private:
 	vector<Point>& points;
 	vector<FiniteElement>& elements;
-	int nodeCount;
 
-	Layer* layer;
+	Layer* layer = nullptr;
 
-	vector<vector<double>> local;
-	vector<double> localb;
+	vector<double>* lambda = nullptr;
+	vector<double>* gamma = nullptr;
+	function<double(double, double, double)>* f = nullptr;
 
 	vector<vector<double>> M;
 	vector<vector<vector<LocalComp>>> gPattern;
 
+	vector<vector<double>> local;
+	vector<double> localb;
+
 private:
 	void BuildPatterns()
-	{	
+	{
 		gPattern.resize(basisSize, vector<vector<LocalComp>>(basisSize));
 		M.resize(basisSize, vector<double>(basisSize));
 
@@ -109,7 +116,6 @@ private:
 			{ alpha[4], alpha[5] }
 		};
 
-		double C = layer->c;
 
 		for (int i = 0; i < basisSize; i++)
 			for (int j = 0; j < basisSize; j++)
@@ -120,22 +126,24 @@ private:
 					double scalGrad = grads[comp.grad1].a1 * grads[comp.grad2].a1 + grads[comp.grad1].a2 * grads[comp.grad2].a2;
 					G += comp.coeff * scalGrad;
 				}
-				local[i][j] = (C * gamma[e.materialNo] * M[i][j] + lambda[e.materialNo] * G) * D;
+
+				if (layer)
+					local[i][j] = (layer->c * gamma->at(e.materialNo) * M[i][j] + lambda->at(e.materialNo) * G) * D;
+				else
+					local[i][j] = (gamma->at(e.materialNo) * M[i][j] + lambda->at(e.materialNo) * G) * D;
+
 			}
 	}
 
-	void BuildLocalB(FiniteElement& e)
+	void BuildLocalB(FiniteElement& e, double t)
 	{
 		vector<Point> coords = CalculateCoords(e, points);
 		double D = abs(Det(e, points));
 
-		const vector<vector<double>*> Qs = layer->qs;
-		const vector<double> Cs = layer->cs;
-		int size = layer->size;
 
 		vector<double> temp(basisSize);
 		for (int i = 0; i < basisSize; i++)
-			temp[i] = f[e.materialNo](coords[i].x, coords[i].y, 0.0);
+			temp[i] = (*f)(coords[i].x, coords[i].y, t);
 
 		for (int i = 0; i < basisSize; i++)
 		{
@@ -144,10 +152,12 @@ private:
 			for (int j = 1; j < basisSize; j++)
 				localb[i] += temp[j] * M[i][j];
 
-			for (int i = 0; i < size; i++)
-				for (int j = 0; j < basisSize; j++)
-					localb[i] += Cs[i] * (*Qs[i])[e.verts[j]] * M[i][j];
-
+			if (layer)
+			{
+				for (int k = 0; k < layer->size; k++)
+					for (int j = 0; j < basisSize; j++)
+						localb[i] += layer->cs[k] * (*layer->qs[k] )[e.verts[j]] * gamma->at(e.materialNo) * M[i][j];
+			}
 
 			localb[i] *= D;
 		}

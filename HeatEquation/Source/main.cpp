@@ -1,13 +1,13 @@
 #include "FEMInfo.h"
 #include "Math.h"
 #include "Matrix.h"
-
+#include "Input.h"
 #include "MeshBuilder.h"
 #include "Interval.h"
 #include "TimeMeshBuilder.h"
 #include "PortraitBuilder.h"
 #include "SLAEBuilder.h"
-
+#include "Boundary.h"
 #include "Solver.h"
 #include "Layer.h"
 
@@ -16,90 +16,9 @@
 
 using namespace std;
 
-void InputGrid(
-	int& nodeCount,
-	string pointsFile, 
-	vector<Point>& points, 
-	string trianglesFile, 
-	vector<FiniteElement>& elements
-)
-{
-	ifstream in(pointsFile);
-	in >> nodeCount;
-	points.resize(nodeCount);
-
-	for (int i = 0; i < nodeCount; i++)
-		in >> points[i].x >> points[i].y;
-	in.close();
-
-	in.open(trianglesFile);
-	int triangleCount;
-	in >> triangleCount;
-	elements.resize(triangleCount);
-	for (int i = 0; i < triangleCount; i++)
-	{
-		elements[i].verts.resize(basisSize);
-		in >> elements[i].verts[0]
-			>> elements[i].verts[1]
-			>> elements[i].verts[2]
-			>> elements[i].materialNo;
-	}
-	in.close();
-}
-
-void InputTime(string timeFile, vector<Interval>& time_intervals)
-{
-	ifstream in(timeFile);
-
-	int time_count;
-	in >> time_count;
-	for (int i = 0; i < time_count; i++)
-	{
-		Interval interval;
-		in >> interval;
-		time_intervals.push_back(interval);
-	}
-	in.close();
-}
-
-//void InputBound(string bounds1File, string bounds2File)
-//{
-//	ifstream in(bounds1File);
-//	in >> edgeCount1;
-//	bound1.resize(edgeCount1);
-//	for (int i = 0; i < edgeCount1; i++)
-//	{
-//		in >> bound1[i].v1 >> bound1[i].v4 >> bound1[i].valueNo;
-//		auto a = bound1[i].v1;
-//		auto b = bound1[i].v4;
-//		bool f = a > b;
-//		if (f) swap(a, b);
-//
-//		bound1[i].v2 = edgeMatrix[a][b] + (f ? 0 : 1);
-//		bound1[i].v3 = edgeMatrix[a][b] + (f ? 1 : 0);
-//	}
-//	in.close();
-//
-//	in.open(bounds2File);
-//	in >> edgeCount2;
-//	bound2.resize(edgeCount2);
-//	for (int i = 0; i < edgeCount2; i++)
-//	{
-//		in >> bound2[i].v1 >> bound2[i].v4 >> bound2[i].valueNo;
-//		auto a = bound2[i].v1;
-//		auto b = bound2[i].v4;
-//		bool f = a > b;
-//		if (f) swap(a, b);
-//
-//		bound2[i].v2 = edgeMatrix[a][b] + (f ? 0 : 1);
-//		bound2[i].v3 = edgeMatrix[a][b] + (f ? 1 : 0);
-//	}
-//	in.close();
-//}
-
-
 int main()
 {
+	// Build mesh and time mesh =====================================================================	
 	int nodeCount;
 	vector<Point> points;
 	vector<FiniteElement> elements;
@@ -110,77 +29,124 @@ int main()
 	nodeCount = mesh.nodeCount;
 
 	vector<Interval> time_intervals;
-	InputTime("time.txt", time_intervals);
+	InputTime(time_intervals, "time.txt");
 	TimeMeshBuilder time(time_intervals);
 
 	const vector<double> t = time.getMesh();
+	// ==============================================================================================
 
+	// Build boundary conditions ====================================================================
+	vector<Edge> bound1, bound2;
+	InputBound(bound1, "boundary1.txt");
+	mesh.BuildBoundary(bound1);
+	InputBound(bound2, "boundary2.txt");
+	mesh.BuildBoundary(bound2);
+	// ==============================================================================================
+
+	// Build matrix portrait ========================================================================
 	Matrix A;
 	PortraitBuilder portrait(nodeCount, elements);
 	portrait.Build(A);
+	// ==============================================================================================
 
-	vector<double> b(nodeCount);
-
+	// SLAE Builder =================================================================================
 	SLAEBuilder builder(points, elements);
-
-	vector<double> q0(nodeCount), q1(nodeCount), q2(nodeCount);
+	vector<double> b(nodeCount);
+	vector<double>* q0 = new vector<double>(nodeCount);
 	vector<vector<double>*> Qs;
+	// ==============================================================================================
 
-	for (int i = 0; i < A.N; i++)
-		q0.push_back(u(points[i].x, points[i].y, t[0]));
+	// Point map ====================================================================================
+	map<int, Point> pointsMap;
+	CreatePointMap(elements, points, pointsMap);
+	// ==============================================================================================
 
-	Qs.push_back(&q0);
-	Layer* layer = new TwoLayer();
+	// Set parameters for initial vector q0 =========================================================
+	vector<double> lambda = { 0 };
+	vector<double> gamma = { 1 };
+	function<double(double, double, double)> f = [](double x, double y, double t) { return t * t; };
 
-	layer->SetQ({ Qs[0] });
-	layer->SetT({ t[0], t[1] });
+	builder.SetLambda(&lambda);
+	builder.SetGamma(&gamma);
+	builder.SetF(&f);
+	// ==============================================================================================
 
-	builder.SetLayer(layer);
-	builder.Build(A, b);
+	// Get initial vector q0 ========================================================================
+	builder.Build(A, b, t[0]);
+	Boundary1(A, b, bound1, pointsMap, t[0]);
 
-	// ���� �������
-
-	Solvers::BCG(A, q1, b);
-	
-	A.Clear();
-
-	Qs.push_back(&q1);
-
-	Layer* layer = new ThreeLayer();
-
-	layer->SetQ({ Qs[0], Qs[1] });
-	layer->SetT({ t[0], t[1], t[2] });
-
-	builder.SetLayer(layer);
-	builder.Build(A, b);
-
-	// ���� �������
-
-	Solvers::BCG(A, q2, b);
+	Solvers::BCG(A, *q0, b);
+	Qs.push_back(q0);
 
 	A.Clear();
+	fill(b.begin(), b.end(), 0.0);
+	// ==============================================================================================
 
-	Qs.push_back(&q2);
+	// Set parameters for four-layer scheme =========================================================
+	lambda = { 1 };
+	gamma = { 1 };
+	f = [](double x, double y, double t) { return 2 * t; };
+	builder.SetLambda(&lambda);
+	builder.SetGamma(&gamma);
+	builder.SetF(&f);
+	// ==============================================================================================
 
-	Layer* layer = new FourLayer();
+	// Solve two-layer scheme for q1 ================================================================
+	Layer* twoLayer = new TwoLayer();
+
+	twoLayer->SetQ({ Qs[0] });
+	twoLayer->SetT({ t[0], t[1] });
+
+	builder.SetLayer(twoLayer);
+	builder.Build(A, b, t[1]);
+	Boundary1(A, b, bound1, pointsMap, t[1]);
+
+	q0 = new vector<double>(nodeCount);
+	Solvers::BCG(A, *q0, b);
+	Qs.push_back(q0);
+
+	fill(b.begin(), b.end(), 0.0);
+	A.Clear();
+	// ==============================================================================================
+
+	// Solve three-layer scheme for q2 ==============================================================
+	Layer* threeLayer = new ThreeLayer();
+
+	threeLayer->SetQ({ Qs[0], Qs[1] });
+	threeLayer->SetT({ t[0], t[1], t[2] });
+
+	builder.SetLayer(threeLayer);
+	builder.Build(A, b, t[2]);
+
+	Boundary1(A, b, bound1, pointsMap, t[2]);
+	q0 = new vector<double>(nodeCount);
+	Solvers::BCG(A, *q0, b);
+	Qs.push_back(q0);
+
+	fill(b.begin(), b.end(), 0.0);
+	A.Clear();
+	// ==============================================================================================
+
+	// Loop for four-layer scheme ===================================================================
+	Layer* fourLayer = new FourLayer();
+	builder.SetLayer(fourLayer);
+	vector<double>* q;
 	for (int i = 3; i < t.size(); i++)
 	{
-		layer->SetQ({ Qs[i - 2], Qs[i - 1], Qs[i] });
-		layer->SetT({ t[i - 3], t[i - 2], t[i - 1], t[i] });
+		fourLayer->SetQ({ Qs[i - 3], Qs[i - 2], Qs[i - 1] });
+		fourLayer->SetT({ t[i - 3], t[i - 2], t[i - 1], t[i] });
 
-		builder.SetLayer(layer);
-		builder.Build(A, b);
+		builder.Build(A, b, t[i]);
+		Boundary1(A, b, bound1, pointsMap, t[i]);
 
-		vector<double> q(nodeCount);
+		q = new vector<double>(nodeCount);
+		Solvers::BCG(A, *q, b);
+		Qs.push_back(q);
 
-		// ���� �������
-
-		Solvers::BCG(A, q, b);
-
-		A.Clear();
-
-		Qs.push_back(&q);
+		fill(b.begin(), b.end(), 0.0);
+		A.Clear();	
 	}
+	// ==============================================================================================
 
 	system("pause");
 	return 0;

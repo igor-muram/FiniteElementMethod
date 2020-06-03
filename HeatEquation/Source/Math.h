@@ -1,7 +1,8 @@
 #pragma once
 
 #include <vector>
-
+#include <map>
+#include <set>
 #include "FEMInfo.h"
 
 using namespace std;
@@ -100,4 +101,25 @@ vector<Point> CalculateCoords(FiniteElement& e, vector<Point>& points)
 double Distance(Point a, Point b)
 {
 	return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+
+void CreatePointMap(vector<FiniteElement>& elements, vector<Point>& points, map<int, Point>& pointsMap)
+{
+	for (auto e : elements)
+	{
+		Point t1 = points[e.verts[0]];
+		Point t2 = points[e.verts[1]];
+		Point t3 = points[e.verts[2]];
+
+		pointsMap.try_emplace(e.verts[0], t1);
+		pointsMap.try_emplace(e.verts[1], t2);
+		pointsMap.try_emplace(e.verts[2], t3);
+		pointsMap.try_emplace(e.verts[3], ((t2 / 2.0) + t1) * 2.0 / 3.0);
+		pointsMap.try_emplace(e.verts[4], ((t2 * 2.0) + t1) / 3.0);
+		pointsMap.try_emplace(e.verts[5], ((t3 / 2.0) + t1) * 2.0 / 3.0);
+		pointsMap.try_emplace(e.verts[6], ((t3 * 2.0) + t1) / 3.0);
+		pointsMap.try_emplace(e.verts[7], ((t3 / 2.0) + t2) * 2.0 / 3.0);
+		pointsMap.try_emplace(e.verts[8], ((t3 * 2.0) + t2) / 3.0);
+		pointsMap.try_emplace(e.verts[9], (t1 + t2 + t3) / 3.0);
+	}
 }
