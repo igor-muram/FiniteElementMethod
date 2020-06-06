@@ -68,12 +68,12 @@ vector<function<double(double, double, double)>> f = {
 };
 
 vector<function<double(double, double, double)>> uValue = {
-	[](double x, double y, double t) { return t * t; }
+	[](double x, double y, double t) { return x * x; }
 };
 vector<double> thetaValue = { 0, 0, 0 };
 vector<double> edgeBasisValues = { 0.125, 0.125, 0.375, 0.375 };
 
 double u(double x, double y, double t)
 {
-	return t * t;
+	return x * x;
 }
