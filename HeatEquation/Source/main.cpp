@@ -64,7 +64,7 @@ int main()
 	// Set parameters for initial vector q0 =========================================================
 	vector<double> lambda = { 0 };
 	vector<double> gamma = { 1 };
-	function<double(double, double, double)> f = [](double x, double y, double t) { return x * x; };
+	function<double(double, double, double)> f = [](double x, double y, double t) { return x * x * t; };
 
 	builder.SetLambda(&lambda);
 	builder.SetGamma(&gamma);
