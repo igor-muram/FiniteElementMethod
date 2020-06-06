@@ -64,19 +64,16 @@ vector<vector<PsiComp>> basis = {
 };
 
 vector<function<double(double, double, double)>> f = {
-	[](double x, double y, double t) { return 0.0; },
-	[](double x, double y, double t) { return -2.0; },
-	[](double x, double y, double t) { return -6.0 * x; },
-	[](double x, double y, double t) { return -12.0 * x * x; }
+	[](double x, double y, double t) { return 2 * t; }
 };
 
-vector<double> gamma = { 0, 0, 0, 0 };
-vector<double> lambda = { 1, 1, 1, 1 };
-vector<double> uValue = { -1, 1 };
+vector<function<double(double, double, double)>> uValue = {
+	[](double x, double y, double t) { return x * x; }
+};
 vector<double> thetaValue = { 0, 0, 0 };
 vector<double> edgeBasisValues = { 0.125, 0.125, 0.375, 0.375 };
 
 double u(double x, double y, double t)
 {
-	return 1.0;
+	return x * x;
 }
