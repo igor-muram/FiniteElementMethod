@@ -16,6 +16,121 @@
 
 using namespace std;
 
+
+void ThreeInitialVectorsWithMass(
+	SLAEBuilder& builder, 
+	Matrix& A, 
+	vector<double>& b,
+	vector<double>& t, 
+	map<int, Point>& pointsMap,
+	vector<Edge>& bound1,
+	vector<Edge>& bound2,
+	vector<vector<double>*>& Qs
+)
+{
+	vector<double>* q0 = new vector<double>(A.N);
+	vector<double>* q1 = new vector<double>(A.N);
+	vector<double>* q2 = new vector<double>(A.N);
+
+	// Get initial vector q0 ========================================================================
+	builder.Build(A, b, t[0]);
+	Boundary1(A, b, bound1, pointsMap, t[0]);
+
+	Solvers::BCG(A, *q0, b);
+	Qs.push_back(q0);
+
+	A.Clear();
+	fill(b.begin(), b.end(), 0.0);
+	// ==============================================================================================
+
+	// Get initial vector q1 ========================================================================
+	builder.Build(A, b, t[1]);
+	Boundary1(A, b, bound1, pointsMap, t[1]);
+
+	Solvers::BCG(A, *q1, b);
+	Qs.push_back(q1);
+
+	A.Clear();
+	fill(b.begin(), b.end(), 0.0);
+	// ==============================================================================================
+
+	// Get initial vector q2 ========================================================================
+	builder.Build(A, b, t[2]);
+	Boundary1(A, b, bound1, pointsMap, t[2]);
+
+	Solvers::BCG(A, *q2, b);
+	Qs.push_back(q2);
+
+	A.Clear();
+	fill(b.begin(), b.end(), 0.0);
+	// ==============================================================================================
+}
+
+void ThreeInitialVectorsWithLayers(
+	SLAEBuilder& builder,
+	Matrix& A,
+	vector<double>& b,
+	vector<double>& t,
+	map<int, Point>& pointsMap,
+	vector<Edge>& bound1,
+	vector<Edge>& bound2,
+	vector<vector<double>*>& Qs
+)
+{
+	vector<double>* q0 = new vector<double>(A.N);
+	vector<double>* q1 = new vector<double>(A.N);
+	vector<double>* q2 = new vector<double>(A.N);
+
+	// Get initial vector q0 ========================================================================
+	builder.Build(A, b, t[0]);
+	Boundary1(A, b, bound1, pointsMap, t[0]);
+	Boundary2(A, b, bound2, pointsMap, t[0]);
+
+	Solvers::BCG(A, *q0, b);
+	Qs.push_back(q0);
+
+	A.Clear();
+	fill(b.begin(), b.end(), 0.0);
+	// ==============================================================================================
+
+	// Solve two-layer scheme for q1 ================================================================
+	Layer* twoLayer = new TwoLayer();
+
+	twoLayer->SetQ({ Qs[0] });
+	twoLayer->SetT({ t[0], t[1] });
+
+	builder.SetLayer(twoLayer);
+	builder.Build(A, b, t[1]);
+	Boundary1(A, b, bound1, pointsMap, t[1]);
+	Boundary2(A, b, bound2, pointsMap, t[1]);
+
+	Solvers::BCG(A, *q1, b);
+	Qs.push_back(q1);
+
+	fill(b.begin(), b.end(), 0.0);
+	A.Clear();
+	// ==============================================================================================
+
+	// Solve three-layer scheme for q2 ==============================================================
+	Layer* threeLayer = new ThreeLayer();
+
+	threeLayer->SetQ({ Qs[0], Qs[1] });
+	threeLayer->SetT({ t[0], t[1], t[2] });
+
+	builder.SetLayer(threeLayer);
+	builder.Build(A, b, t[2]);
+
+	Boundary1(A, b, bound1, pointsMap, t[2]);
+	Boundary2(A, b, bound2, pointsMap, t[2]);
+
+	Solvers::BCG(A, *q2, b);
+	Qs.push_back(q2);
+
+	fill(b.begin(), b.end(), 0.0);
+	A.Clear();
+	// ==============================================================================================
+}
+
 int main()
 {
 	// Build mesh and time mesh =====================================================================	
@@ -32,7 +147,7 @@ int main()
 	InputTime(time_intervals, "time.txt");
 	TimeMeshBuilder time(time_intervals);
 
-	const vector<double> t = time.getMesh();
+	vector<double> t = time.getMesh();
 	// ==============================================================================================
 
 	// Build boundary conditions ====================================================================
@@ -53,6 +168,8 @@ int main()
 	SLAEBuilder builder(points, elements);
 	vector<double> b(nodeCount);
 	vector<double>* q0 = new vector<double>(nodeCount);
+	vector<double>* q1 = new vector<double>(nodeCount);
+	vector<double>* q2 = new vector<double>(nodeCount);
 	vector<vector<double>*> Qs;
 	// ==============================================================================================
 
@@ -64,68 +181,24 @@ int main()
 	// Set parameters for initial vector q0 =========================================================
 	vector<double> lambda = { 0 };
 	vector<double> gamma = { 1 };
-	function<double(double, double, double)> f = [](double x, double y, double t) { return x * x * t; };
+	function<double(double, double, double)> f = [](double x, double y, double t) { return x; };
 
 	builder.SetLambda(&lambda);
 	builder.SetGamma(&gamma);
 	builder.SetF(&f);
 	// ==============================================================================================
 
-	// Get initial vector q0 ========================================================================
-	builder.Build(A, b, t[0]);
-	Boundary1(A, b, bound1, pointsMap, t[0]);
-
-	Solvers::BCG(A, *q0, b);
-	Qs.push_back(q0);
-
-	A.Clear();
-	fill(b.begin(), b.end(), 0.0);
-	// ==============================================================================================
+	ThreeInitialVectorsWithLayers(builder, A, b, t, pointsMap, bound1, bound2, Qs);
 
 	// Set parameters for four-layer scheme =========================================================
 	lambda = { 1 };
 	gamma = { 1 };
-	f = [](double x, double y, double t) { return 2 * t; };
+	f = [](double x, double y, double t) { return 0; };
 	builder.SetLambda(&lambda);
 	builder.SetGamma(&gamma);
 	builder.SetF(&f);
 	// ==============================================================================================
 
-	// Solve two-layer scheme for q1 ================================================================
-	Layer* twoLayer = new TwoLayer();
-
-	twoLayer->SetQ({ Qs[0] });
-	twoLayer->SetT({ t[0], t[1] });
-
-	builder.SetLayer(twoLayer);
-	builder.Build(A, b, t[1]);
-	Boundary1(A, b, bound1, pointsMap, t[1]);
-
-	q0 = new vector<double>(nodeCount);
-	Solvers::BCG(A, *q0, b);
-	Qs.push_back(q0);
-
-	fill(b.begin(), b.end(), 0.0);
-	A.Clear();
-	// ==============================================================================================
-
-	// Solve three-layer scheme for q2 ==============================================================
-	Layer* threeLayer = new ThreeLayer();
-
-	threeLayer->SetQ({ Qs[0], Qs[1] });
-	threeLayer->SetT({ t[0], t[1], t[2] });
-
-	builder.SetLayer(threeLayer);
-	builder.Build(A, b, t[2]);
-
-	Boundary1(A, b, bound1, pointsMap, t[2]);
-	q0 = new vector<double>(nodeCount);
-	Solvers::BCG(A, *q0, b);
-	Qs.push_back(q0);
-
-	fill(b.begin(), b.end(), 0.0);
-	A.Clear();
-	// ==============================================================================================
 
 	// Loop for four-layer scheme ===================================================================
 	Layer* fourLayer = new FourLayer();
