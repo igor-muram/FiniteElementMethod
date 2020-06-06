@@ -8,29 +8,29 @@ using namespace std;
 struct FiniteElement
 {
 	std::vector<int> verts;
-	int materialNo;
+	int materialNo = 0;
 };
 
 const int basisSize = 10;
 
 struct DerComp
 {
-	int gradNo;
-	double coeff;
-	int v1, v2, v3;
+	int gradNo = 0;
+	double coeff = 0.0;
+	int v1 = 0, v2 = 0, v3 = 0;
 };
 
 struct PsiComp
 {
-	double coeff;
-	int v1, v2, v3;
+	double coeff = 0.0;
+	int v1 = 0, v2 = 0, v3 = 0;
 };
 
 struct LocalComp
 {
 	LocalComp(int grad1, int grad2, double coeff) : grad1(grad1), grad2(grad2), coeff(coeff) {}
-	int grad1, grad2;
-	double coeff;
+	int grad1 = 0, grad2 = 0;
+	double coeff = 0.0;
 };
 
 vector<vector<DerComp>> ders = {
@@ -63,17 +63,16 @@ vector<vector<PsiComp>> basis = {
 	{ { 27, 1, 1, 1 } }
 };
 
-vector<function<double(double, double, double)>> f = {
-	[](double x, double y, double t) { return 2 * t; }
+vector<function<double(double, double, double)>> uValue = {
+	[](double x, double y, double t) { return x; }
 };
 
-vector<function<double(double, double, double)>> uValue = {
-	[](double x, double y, double t) { return x * x * t; }
+vector<function<double(double, double, double)>> thetaValue = { 
+	[](double x, double y, double t) { return -1; },
+	[](double x, double y, double t) { return 1; }
 };
-vector<double> thetaValue = { 0, 0, 0 };
-vector<double> edgeBasisValues = { 0.125, 0.125, 0.375, 0.375 };
 
 double u(double x, double y, double t)
 {
-	return x * x * t;
+	return x;
 }
