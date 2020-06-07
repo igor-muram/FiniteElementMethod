@@ -123,3 +123,22 @@ void CreatePointMap(vector<FiniteElement>& elements, vector<Point>& points, map<
 		pointsMap.try_emplace(e.verts[9], (t1 + t2 + t3) / 3.0);
 	}
 }
+
+double NewtonCotes(double a, double b, function<double(double)> f)
+{
+	double h = (b - a) / 1000;
+	double result = f(a);
+
+	for (double x = h; x < b; x += h)
+		result += 2 * f(x);
+
+	result += f(b);
+	result *= 7;
+
+	for (double x = 0.0; x < b; x += h)
+		result += 32 * f(x + h / 4) + 12 * f(x + h / 2) + 32 * f(x + 3 * h / 4);
+
+	result = result * 0.5 * h / 45;
+
+	return result;
+}

@@ -12,7 +12,7 @@ class MeshBuilder
 public:
 	MeshBuilder(int nodeCount) : nodeCount(nodeCount)
 	{
-		edgeMatrix.resize(nodeCount);
+		edgeMatrix.resize(nodeCount, vector<int>(nodeCount));
 	}
 
 	void Build(std::vector<FiniteElement>& elements)
@@ -56,12 +56,13 @@ public:
 			bool f = a > b;
 			if (f) swap(a, b);
 
-			edge.v2 = edgeMatrix[a][b] + (f ? 0 : 1);
-			edge.v3 = edgeMatrix[a][b] + (f ? 1 : 0);
+			int e = edgeMatrix[a][b];
+			edge.v2 = edgeMatrix[a][b] + (f ? 1 : 0);
+			edge.v3 = edgeMatrix[a][b] + (f ? 0 : 1);
 		}
 	}
 
 public:
 	int nodeCount = 0;
-	vector<map<int, int>> edgeMatrix;
+	vector<vector<int>> edgeMatrix;
 };
