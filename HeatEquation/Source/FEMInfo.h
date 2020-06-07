@@ -67,9 +67,9 @@ vector<function<double(double, double, double)>> uValue = {
 	[](double x, double y, double t) { return x; }
 };
 
-vector<function<double(double, double, double)>> thetaValue = { 
-	[](double x, double y, double t) { return -1; },
-	[](double x, double y, double t) { return 1; }
+vector<function<double(double)>> thetaValue = { 
+	[](double x) { return -1; },
+	[](double x) { return 1; }
 };
 
 double u(double x, double y, double t)

@@ -32,6 +32,16 @@ void ThreeInitialVectorsWithMass(
 	vector<double>* q1 = new vector<double>(A.N);
 	vector<double>* q2 = new vector<double>(A.N);
 
+	// Set parameters for initial vector q0 =========================================================
+	vector<double> lambda = { 0 };
+	vector<double> gamma = { 1 };
+	function<double(double, double, double)> f = [](double x, double y, double t) { return x; };
+
+	builder.SetLambda(&lambda);
+	builder.SetGamma(&gamma);
+	builder.SetF(&f);
+	// ==============================================================================================
+
 	// Get initial vector q0 ========================================================================
 	builder.Build(A, b, t[0]);
 	Boundary1(A, b, bound1, pointsMap, t[0]);
@@ -81,16 +91,34 @@ void ThreeInitialVectorsWithLayers(
 	vector<double>* q1 = new vector<double>(A.N);
 	vector<double>* q2 = new vector<double>(A.N);
 
+	// Set parameters for initial vector q0 =========================================================
+	vector<double> lambda = { 0 };
+	vector<double> gamma = { 1 };
+	function<double(double, double, double)> f = [](double x, double y, double t) { return x; };
+
+	builder.SetLambda(&lambda);
+	builder.SetGamma(&gamma);
+	builder.SetF(&f);
+	// ==============================================================================================
+
 	// Get initial vector q0 ========================================================================
 	builder.Build(A, b, t[0]);
-	Boundary1(A, b, bound1, pointsMap, t[0]);
 	Boundary2(A, b, bound2, pointsMap, t[0]);
+	Boundary1(A, b, bound1, pointsMap, t[0]);
 
 	Solvers::BCG(A, *q0, b);
 	Qs.push_back(q0);
 
 	A.Clear();
 	fill(b.begin(), b.end(), 0.0);
+	// ==============================================================================================
+
+	// Set parameters for initial vector q0 =========================================================
+	lambda = { 1 };
+	f = [](double x, double y, double t) { return 0; };
+
+	builder.SetLambda(&lambda);
+	builder.SetF(&f);
 	// ==============================================================================================
 
 	// Solve two-layer scheme for q1 ================================================================
@@ -101,8 +129,8 @@ void ThreeInitialVectorsWithLayers(
 
 	builder.SetLayer(twoLayer);
 	builder.Build(A, b, t[1]);
-	Boundary1(A, b, bound1, pointsMap, t[1]);
 	Boundary2(A, b, bound2, pointsMap, t[1]);
+	Boundary1(A, b, bound1, pointsMap, t[1]);
 
 	Solvers::BCG(A, *q1, b);
 	Qs.push_back(q1);
@@ -119,9 +147,8 @@ void ThreeInitialVectorsWithLayers(
 
 	builder.SetLayer(threeLayer);
 	builder.Build(A, b, t[2]);
-
-	Boundary1(A, b, bound1, pointsMap, t[2]);
 	Boundary2(A, b, bound2, pointsMap, t[2]);
+	Boundary1(A, b, bound1, pointsMap, t[2]);
 
 	Solvers::BCG(A, *q2, b);
 	Qs.push_back(q2);
@@ -178,27 +205,17 @@ int main()
 	CreatePointMap(elements, points, pointsMap);
 	// ==============================================================================================
 
-	// Set parameters for initial vector q0 =========================================================
-	vector<double> lambda = { 0 };
-	vector<double> gamma = { 1 };
-	function<double(double, double, double)> f = [](double x, double y, double t) { return x; };
-
-	builder.SetLambda(&lambda);
-	builder.SetGamma(&gamma);
-	builder.SetF(&f);
-	// ==============================================================================================
 
 	ThreeInitialVectorsWithLayers(builder, A, b, t, pointsMap, bound1, bound2, Qs);
 
-	// Set parameters for four-layer scheme =========================================================
-	lambda = { 1 };
-	gamma = { 1 };
-	f = [](double x, double y, double t) { return 0; };
-	builder.SetLambda(&lambda);
-	builder.SetGamma(&gamma);
-	builder.SetF(&f);
-	// ==============================================================================================
-
+	//// Set parameters for four-layer scheme =========================================================
+	//lambda = { 1 };
+	//gamma = { 1 };
+	//f = [](double x, double y, double t) { return 0; };
+	//builder.SetLambda(&lambda);
+	//builder.SetGamma(&gamma);
+	//builder.SetF(&f);
+	//// ==============================================================================================
 
 	// Loop for four-layer scheme ===================================================================
 	Layer* fourLayer = new FourLayer();
