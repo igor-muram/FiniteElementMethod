@@ -16,12 +16,11 @@
 
 using namespace std;
 
-
 void ThreeInitialVectorsWithMass(
-	SLAEBuilder& builder, 
-	Matrix& A, 
+	SLAEBuilder& builder,
+	Matrix& A,
 	vector<double>& b,
-	vector<double>& t, 
+	vector<double>& t,
 	map<int, Point>& pointsMap,
 	vector<Edge>& bound1,
 	vector<Edge>& bound2,
@@ -212,14 +211,14 @@ int main()
 
 	ThreeInitialVectorsWithLayers(builder, A, b, t, pointsMap, bound1, bound2, Qs);
 
-	//// Set parameters for four-layer scheme =========================================================
-	//lambda = { 1 };
-	//gamma = { 1 };
-	//f = [](double x, double y, double t) { return 0; };
-	//builder.SetLambda(&lambda);
-	//builder.SetGamma(&gamma);
-	//builder.SetF(&f);
-	//// ==============================================================================================
+	// Set parameters for four-layer scheme =========================================================
+	vector<double> lambda = { 1 };
+	vector<double> gamma = { 1 };
+	function<double(double, double, double)> f = [](double x, double y, double t) { return 0.; };
+	builder.SetLambda(&lambda);
+	builder.SetGamma(&gamma);
+	builder.SetF(&f);
+	// ==============================================================================================
 
 	// Loop for four-layer scheme ===================================================================
 	Layer* fourLayer = new FourLayer();
@@ -231,6 +230,7 @@ int main()
 		fourLayer->SetT({ t[i - 3], t[i - 2], t[i - 1], t[i] });
 
 		builder.Build(A, b, t[i]);
+		Boundary2(lambda[0], A, b, bound2, pointsMap, t[i]);
 		Boundary1(A, b, bound1, pointsMap, t[i]);
 
 		q = new vector<double>(nodeCount);
@@ -238,7 +238,7 @@ int main()
 		Qs.push_back(q);
 
 		fill(b.begin(), b.end(), 0.0);
-		A.Clear();	
+		A.Clear();
 	}
 	// ==============================================================================================
 
