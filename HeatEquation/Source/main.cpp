@@ -44,6 +44,8 @@ void ThreeInitialVectorsWithMass(
 
 	// Get initial vector q0 ========================================================================
 	builder.Build(A, b, t[0]);
+
+	Boundary2(lambda[0], A, b, bound2, pointsMap, t[0]);
 	Boundary1(A, b, bound1, pointsMap, t[0]);
 
 	Solvers::BCG(A, *q0, b);
@@ -55,6 +57,7 @@ void ThreeInitialVectorsWithMass(
 
 	// Get initial vector q1 ========================================================================
 	builder.Build(A, b, t[1]);
+	Boundary2(lambda[0], A, b, bound2, pointsMap, t[1]);
 	Boundary1(A, b, bound1, pointsMap, t[1]);
 
 	Solvers::BCG(A, *q1, b);
@@ -66,6 +69,7 @@ void ThreeInitialVectorsWithMass(
 
 	// Get initial vector q2 ========================================================================
 	builder.Build(A, b, t[2]);
+	Boundary2(lambda[0], A, b, bound2, pointsMap, t[2]);
 	Boundary1(A, b, bound1, pointsMap, t[2]);
 
 	Solvers::BCG(A, *q2, b);
@@ -103,7 +107,7 @@ void ThreeInitialVectorsWithLayers(
 
 	// Get initial vector q0 ========================================================================
 	builder.Build(A, b, t[0]);
-	Boundary2(A, b, bound2, pointsMap, t[0]);
+	Boundary2(lambda[0], A, b, bound2, pointsMap, t[0]);
 	Boundary1(A, b, bound1, pointsMap, t[0]);
 
 	Solvers::BCG(A, *q0, b);
@@ -129,7 +133,7 @@ void ThreeInitialVectorsWithLayers(
 
 	builder.SetLayer(twoLayer);
 	builder.Build(A, b, t[1]);
-	Boundary2(A, b, bound2, pointsMap, t[1]);
+	Boundary2(lambda[0], A, b, bound2, pointsMap, t[1]);
 	Boundary1(A, b, bound1, pointsMap, t[1]);
 
 	Solvers::BCG(A, *q1, b);
@@ -147,7 +151,7 @@ void ThreeInitialVectorsWithLayers(
 
 	builder.SetLayer(threeLayer);
 	builder.Build(A, b, t[2]);
-	Boundary2(A, b, bound2, pointsMap, t[2]);
+	Boundary2(lambda[0], A, b, bound2, pointsMap, t[2]);
 	Boundary1(A, b, bound1, pointsMap, t[2]);
 
 	Solvers::BCG(A, *q2, b);

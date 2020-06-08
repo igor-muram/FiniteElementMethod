@@ -31,7 +31,7 @@ void Boundary1(Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point
 //		{ 8.0 / 105, 19.0 / 1680, 33.0 / 560, -3.0 / 140 },
 //		{ 19.0 / 1680, 8.0 / 105, -3.0 / 140, 33.0 / 560 },
 //		{  33.0 / 560, -3.0 / 140, 27.0 / 70, -27.0 / 560 },
-//		{  -3.0 / 140, 33.0 / 560, -27.0 / 560, 3.0 / 8 }
+//		{  -3.0 / 140, 33.0 / 560, -27.0 / 560, 27.0 / 70 }
 //	};
 //
 //	for (int edge = 0; edge < bound.size(); edge++)
@@ -57,7 +57,7 @@ void Boundary1(Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point
 //	}
 //}
 
-void Boundary2(Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point>& pointsMap, double t)
+void Boundary2(double lambda, Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point>& pointsMap, double t)
 {
 	vector<double> conditions(4, 0.0);
 
@@ -73,15 +73,15 @@ void Boundary2(Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point
 		vector<function<double(double)>> basis =
 		{
 			[h](double x) { return 0.5 * x * (3 * x - 1) * (3 * x - 2); },
-			[h](double x) { return 4.5 * (h - x) * x * (3 * (h - x) - 1); },
-			[h](double x) { return  4.5 * (h - x) * x * (3 * x - 1); },
-			[h](double x) { return 0.5 * (h - x) * (3 * (h - x) - 1) * (3 * (h - x) - 2); }
+			[h](double x) { return 4.5 * (1 - x) * x * (3 * x - 1); },
+			[h](double x) { return 4.5 * (1 - x) * x * (3 * (1 - x) - 1); },
+			[h](double x) { return 0.5 * (1 - x) * (3 * (1 - x) - 1) * (3 * (1 - x) - 2); }
 		};
 
 		for (int i = 0; i < 4; i++)
 		{
 			function<double(double)> psi = basis[i];
-			conditions[i] = NewtonCotes(0.0, h, [theta, psi](double x) { return theta(x) * psi(x); });
+			conditions[i] = h * lambda * NewtonCotes(0.0, 1, [theta, psi](double x) { return theta(x) * psi(x); });
 		}
 
 		b[v[0]] += conditions[0];
