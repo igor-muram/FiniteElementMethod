@@ -125,7 +125,7 @@
   <ItemGroup>
     <ClCompile Include="Source\Matrix.h" />
     <ClCompile Include="Source\main.cpp" />
-    <ClCompile Include="Source\Solver.cpp" />
+    <ClCompile Include="Source\Solvers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Boundary.h" />
@@ -137,7 +137,7 @@
     <ClInclude Include="Source\MeshBuilder.h" />
     <ClInclude Include="Source\PortraitBuilder.h" />
     <ClInclude Include="Source\SLAEBuilder.h" />
-    <ClInclude Include="Source\Solver.h" />
+    <ClInclude Include="Source\Solvers.h" />
     <ClInclude Include="Source\TimeMeshBuilder.h" />
   </ItemGroup>
   <ItemGroup>

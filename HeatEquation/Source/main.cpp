@@ -8,7 +8,7 @@
 #include "PortraitBuilder.h"
 #include "SLAEBuilder.h"
 #include "Boundary.h"
-#include "Solver.h"
+#include "Solvers.h"
 #include "Layer.h"
 
 #include <string>
@@ -45,7 +45,7 @@ void ThreeInitialVectorsWithMass(
 	builder.Build(A, b, t[0]);
 	Boundary1(A, b, bound1, pointsMap, t[0]);
 
-	Solvers::BCG(A, *q0, b);
+	Solvers::LOS(A, *q0, b);
 	Qs.push_back(q0);
 
 	A.Clear();
@@ -56,7 +56,7 @@ void ThreeInitialVectorsWithMass(
 	builder.Build(A, b, t[1]);
 	Boundary1(A, b, bound1, pointsMap, t[1]);
 
-	Solvers::BCG(A, *q1, b);
+	Solvers::LOS(A, *q1, b);
 	Qs.push_back(q1);
 
 	A.Clear();
@@ -67,7 +67,7 @@ void ThreeInitialVectorsWithMass(
 	builder.Build(A, b, t[2]);
 	Boundary1(A, b, bound1, pointsMap, t[2]);
 
-	Solvers::BCG(A, *q2, b);
+	Solvers::LOS(A, *q2, b);
 	Qs.push_back(q2);
 
 	A.Clear();
@@ -105,7 +105,7 @@ void ThreeInitialVectorsWithLayers(
 
 	Boundary1(A, b, bound1, pointsMap, t[0]);
 
-	Solvers::BCG(A, *q0, b);
+	Solvers::LOS(A, *q0, b);
 	Qs.push_back(q0);
 
 	A.Clear();
@@ -131,7 +131,7 @@ void ThreeInitialVectorsWithLayers(
 	Boundary2(A, b, bound2, pointsMap, lambda[0], t[0]);
 	Boundary1(A, b, bound1, pointsMap, t[1]);
 
-	Solvers::BCG(A, *q1, b);
+	Solvers::LOS(A, *q1, b);
 	Qs.push_back(q1);
 
 	fill(b.begin(), b.end(), 0.0);
@@ -149,7 +149,7 @@ void ThreeInitialVectorsWithLayers(
 	Boundary2(A, b, bound2, pointsMap, lambda[0], t[0]);
 	Boundary1(A, b, bound1, pointsMap, t[2]);
 
-	Solvers::BCG(A, *q2, b);
+	Solvers::LOS(A, *q2, b);
 	Qs.push_back(q2);
 
 	fill(b.begin(), b.end(), 0.0);
@@ -230,7 +230,7 @@ int main()
 		Boundary1(A, b, bound1, pointsMap, t[i]);
 
 		q = new vector<double>(nodeCount);
-		Solvers::BCG(A, *q, b);
+		Solvers::LOS(A, *q, b);
 		Qs.push_back(q);
 
 		fill(b.begin(), b.end(), 0.0);

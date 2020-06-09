@@ -1,4 +1,4 @@
-#include "Solver.h"
+#include "Solvers.h"
 #include <cmath>
 
 namespace Solvers
@@ -19,7 +19,7 @@ namespace Solvers
 
 	struct RawMatrix
 	{
-		int N = 0;
+		int N;
 		double* DI = nullptr;
 		double* AL = nullptr;
 		double* AU = nullptr;
@@ -27,8 +27,37 @@ namespace Solvers
 		int* JA = nullptr;
 	};
 
+	int LOS_LU(RawMatrix& A, double* x, double* f, RawMatrix& LU, AuxVectors& aux, int maxiter, double eps, double& lastdiff);
 	int BCG_LU(RawMatrix& A, double* x, double* f, RawMatrix& LU, AuxVectors& aux, int maxiter, double eps);
 	void LUFactorization(RawMatrix& A, RawMatrix& LU);
+
+	int LOS(Matrix& A, std::vector<double>& x, std::vector<double>& b)
+	{
+		RawMatrix Raw;
+		Raw.N = A.N;
+		Raw.DI = A.DI.data();
+		Raw.AL = A.AL.data();
+		Raw.AU = A.AL.data();
+		Raw.IA = A.IA.data();
+		Raw.JA = A.JA.data();
+
+		AuxVectors aux;
+
+		aux.Ax = new double[A.N];
+		aux.r = new double[A.N];
+		aux.z = new double[A.N];
+		aux.p = new double[A.N];
+		aux.temp = new double[A.N];
+
+		RawMatrix LU;
+		LUFactorization(Raw, LU);
+		std::vector<double> Braw = b;
+		double lastdiff = 0;
+
+		x.resize(A.N);
+		return LOS_LU(Raw, x.data(), Braw.data(), LU, aux, 20000, 1.0e-30, lastdiff);
+
+	}
 
 	int BCG(Matrix& A, std::vector<double>& x, std::vector<double>& b)
 	{
@@ -56,7 +85,7 @@ namespace Solvers
 		double lastdiff = 0;
 
 		x.resize(A.N);
-		return BCG_LU(Raw, x.data(), b.data(), LU, aux, 20000, 1.0e-30);
+		return BCG_LU(Raw, x.data(), b.data(), LU, aux, 20000, 1.0e-14);
 	}
 
 	void Multiply(RawMatrix& A, double* vec, double* res)
@@ -272,6 +301,66 @@ namespace Solvers
 			sum += a[i] * b[i];
 
 		return sum;
+	}
+
+	int LOS_LU(RawMatrix& A, double* x, double* f, RawMatrix& LU, AuxVectors& aux, int maxiter, double eps, double& lastdiff)
+	{
+		double* Ax = aux.Ax;
+		double* r = aux.r;
+		double* z = aux.z;
+		double* p = aux.p;
+		double* temp = aux.temp;
+		int N = A.N;
+
+		// Calculate r0
+		Multiply(A, x, Ax);
+		for (int i = 0; i < N; i++)
+			r[i] = f[i] - Ax[i];
+		Forward(LU, r, r, false);
+
+		//Calculate z0
+		Backward(LU, z, r, false);
+
+		// Calculate p0
+		Multiply(A, z, p);
+		Forward(LU, p, p, false);
+
+		double diff = DotProduct(N, r, r);
+
+		int k = 0;
+		for (; k < maxiter && diff >= eps; k++)
+		{
+			// Calculate alpha
+			double dotP = DotProduct(N, p, p);
+			double a = DotProduct(N, p, r) / dotP;
+
+			// Calculate xk, rk
+			for (int i = 0; i < N; i++)
+			{
+				x[i] += a * z[i];
+				r[i] -= a * p[i];
+			}
+
+			// Calculate beta
+			Backward(LU, Ax, r, false);
+			Multiply(A, Ax, temp);
+			Forward(LU, Ax, temp, false);
+			double b = -DotProduct(N, p, Ax) / dotP;
+
+			// Calculate zk, pk
+			Backward(LU, temp, r, false);
+			for (int i = 0; i < N; i++)
+			{
+				z[i] = temp[i] + b * z[i];
+				p[i] = Ax[i] + b * p[i];
+			}
+
+			// Calculate difference
+			diff = DotProduct(N, r, r);
+		}
+
+		lastdiff = diff;
+		return k;
 	}
 
 	int BCG_LU(RawMatrix& A, double* x, double* f, RawMatrix& LU, AuxVectors& aux, int maxiter, double eps)
