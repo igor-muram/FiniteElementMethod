@@ -56,7 +56,7 @@ namespace Solvers
 		double lastdiff = 0;
 
 		x.resize(A.N);
-		return BCG_LU(Raw, x.data(), b.data(), LU, aux, 20000, 1.0e-14);
+		return BCG_LU(Raw, x.data(), b.data(), LU, aux, 20000, 1.0e-30);
 	}
 
 	void Multiply(RawMatrix& A, double* vec, double* res)

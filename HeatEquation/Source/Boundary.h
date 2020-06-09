@@ -12,35 +12,30 @@ void Boundary1(Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point
 {
 	vector<vector<double>> M =
 	{
-		{ 19.0 / 1680, -3.0 / 140, 33.0 / 560, 8.0 / 105 },
-		{ -3.0 / 140, -27.0 / 560, 27.0 / 70, 33.0 / 560, },
-		{ 33.0 / 560, 27.0 / 70, -27.0 / 560, -3.0 / 140 },
-		{  8.0 / 105, 33.0 / 560, -3.0 / 140, 19.0 / 1680 }
-	};
+		//{ 19.0 / 1680	, -3.0 / 140	, 33.0 / 560	, 8.0 / 105 },
+		//{ -3.0 / 140	, -27.0 / 560	, 27.0 / 70		, 33.0 / 560 },
+		//{ 33.0 / 560	, 27.0 / 70		, -27.0 / 560	, -3.0 / 140 },
+		//{  8.0 / 105	, 33.0 / 560	, -3.0 / 140	, 19.0 / 1680 }
 
-	//vector<vector<double>> M =
-	//{
-	//	{ 1.0 / 3, 1.0 / 12, 1.0 / 60, 1.0 / 6 },
-	//	{ 1.0 / 12, 1.0 / 30, 0, 1.0 / 12 },
-	//	{ 1.0 / 60, 0, 1.0 / 210, -1.0 / 60 },
-	//	{ 1.0 / 6, 1.0 / 12, -1.0 / 6, 1.0 / 3 },
-	//};
+
+		{  8.0 / 105	, 33.0 / 560	, -3.0 / 140	, 19.0 / 1680 },
+		{ 33.0 / 560	, 27.0 / 70		, -27.0 / 560	, -3.0 / 140 },
+		{ -3.0 / 140	, -27.0 / 560	, 27.0 / 70		, 33.0 / 560 },
+		{ 19.0 / 1680	, -3.0 / 140	, 33.0 / 560	, 8.0 / 105 }
+
+	};
 
 	vector<function<double(double)>> basis =
 	{
-		[](double x) { return 0.5 * x * (3 * x - 1) * (3 * x - 2); },
+		/*[](double x) { return 0.5 * x * (3 * x - 1) * (3 * x - 2); },
 		[](double x) { return 4.5 * (1 - x) * x * (3 * x - 1); },
 		[](double x) { return 4.5 * (1 - x) * x * (3 * (1 - x) - 1); },
-		[](double x) { return 0.5 * (1 - x) * (3 * (1 - x) - 1) * (3 * (1 - x) - 2); }
+		[](double x) { return 0.5 * (1 - x) * (3 * (1 - x) - 1) * (3 * (1 - x) - 2); }*/
+		[](double x) { return 0.5 * (1 - x) * (3 * (1 - x) - 1) * (3 * (1 - x) - 2); },
+		[](double x) { return 4.5 * (1 - x) * x * (3 * (1 - x) - 1); },
+		[](double x) { return 4.5 * (1 - x) * x * (3 * x - 1); },
+		[](double x) { return 0.5 * x * (3 * x - 1) * (3 * x - 2); }
 	};
-
-	//vector<function<double(double)>> basis =
-	//{
-	//	[](double x) { return x; },
-	//	[](double x) { return x * (1 - x); },
-	//	[](double x) { return x * (1 - x) * (2 * x - 1); },
-	//	[](double x) { return 1 - x; },
-	//};
 
 	for (auto edge : bound)
 	{
@@ -73,10 +68,10 @@ void Boundary2(Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point
 {
 	vector<function<double(double)>> basis =
 	{
-		[](double x) { return 0.5 * x * (3 * x - 1) * (3 * x - 2); },
-		[](double x) { return 4.5 * (1 - x) * x * (3 * x - 1); },
+		[](double x) { return 0.5 * (1 - x) * (3 * (1 - x) - 1) * (3 * (1 - x) - 2); },
 		[](double x) { return 4.5 * (1 - x) * x * (3 * (1 - x) - 1); },
-		[](double x) { return 0.5 * (1 - x) * (3 * (1 - x) - 1) * (3 * (1 - x) - 2); }
+		[](double x) { return 4.5 * (1 - x) * x * (3 * x - 1); },
+		[](double x) { return 0.5 * x * (3 * x - 1) * (3 * x - 2); }
 	};
 
 	for (int edge = 0; edge < bound.size(); edge++)
@@ -87,10 +82,13 @@ void Boundary2(Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point
 		function<double(double)> theta = thetaValue[thetaNo];
 		double h = Distance(pointsMap[v[0]], pointsMap[v[3]]);
 
+		double x1 = pointsMap[v[0]].x;
+		double x2 = pointsMap[v[3]].x;
+
 		for (int i = 0; i < 4; i++)
 		{
 			function<double(double)> psi = basis[i];
-			b[v[i]] += h * lambda * NewtonCotes(0.0, 1.0, [theta, psi](double x) { return theta(x) * psi(x); });
+			b[v[i]] += h * NewtonCotes(0.0, 1.0, [&](double x) { return theta(x1 + (x2 - x1) * x) * psi(x); });
 		}
 
 	}
