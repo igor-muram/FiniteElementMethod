@@ -131,7 +131,6 @@ private:
 					local[i][j] = (layer->c * gamma->at(e.materialNo) * M[i][j] + lambda->at(e.materialNo) * G) * D;
 				else
 					local[i][j] = (gamma->at(e.materialNo) * M[i][j] + lambda->at(e.materialNo) * G) * D;
-
 			}
 	}
 
@@ -156,7 +155,7 @@ private:
 			{
 				for (int k = 0; k < layer->size; k++)
 					for (int j = 0; j < basisSize; j++)
-						localb[i] += layer->cs[k] * (*layer->qs[k] )[e.verts[j]] * gamma->at(e.materialNo) * M[i][j];
+						localb[i] += layer->cs[k] * (*layer->qs[k])[e.verts[j]] * gamma->at(e.materialNo) * M[i][j];
 			}
 
 			localb[i] *= D;

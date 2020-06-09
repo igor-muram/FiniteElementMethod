@@ -59,7 +59,7 @@ vector<vector<PsiComp>> basis = {
 	{ { 13.5, 1, 0, 2 },        { -4.5, 1, 0, 1 } },
 
 	{ { 13.5, 0, 2, 1 },        { -4.5, 0, 1, 1 } },
-	{ { 13.5, 0, 1, 2 },			 { -4.5, 0, 1, 1 } },
+	{ { 13.5, 0, 1, 2 },		{ -4.5, 0, 1, 1 } },
 	{ { 27, 1, 1, 1 } }
 };
 
@@ -67,7 +67,7 @@ vector<function<double(double, double)>> uValue = {
 	[](double x, double y) { return x * y; }
 };
 
-vector<function<double(double)>> thetaValue = { 
+vector<function<double(double)>> thetaValue = {
 	[](double x) { return x; },
 	[](double x) { return -x; }
 };

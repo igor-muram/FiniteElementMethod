@@ -16,12 +16,11 @@
 
 using namespace std;
 
-
 void ThreeInitialVectorsWithMass(
-	SLAEBuilder& builder, 
-	Matrix& A, 
+	SLAEBuilder& builder,
+	Matrix& A,
 	vector<double>& b,
-	vector<double>& t, 
+	vector<double>& t,
 	map<int, Point>& pointsMap,
 	vector<Edge>& bound1,
 	vector<Edge>& bound2,
@@ -103,7 +102,7 @@ void ThreeInitialVectorsWithLayers(
 
 	// Get initial vector q0 ========================================================================
 	builder.Build(A, b, t[0]);
-	
+
 	Boundary1(A, b, bound1, pointsMap, t[0]);
 
 	Solvers::BCG(A, *q0, b);
@@ -235,12 +234,12 @@ int main()
 		Qs.push_back(q);
 
 		fill(b.begin(), b.end(), 0.0);
-		A.Clear();	
+		A.Clear();
 	}
 	// ==============================================================================================
 
 	for (int i = 4; i < 5; i++)
-		for(int j = 0; j < (*Qs[i]).size(); j++)
+		for (int j = 0; j < (*Qs[i]).size(); j++)
 			printf("%.10f\n", (*Qs[i])[j]);
 
 	system("pause");
