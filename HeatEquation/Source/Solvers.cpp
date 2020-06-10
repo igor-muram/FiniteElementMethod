@@ -31,7 +31,7 @@ namespace Solvers
 	int BCG_LU(RawMatrix& A, double* x, double* f, RawMatrix& LU, AuxVectors& aux, int maxiter, double eps);
 	void LUFactorization(RawMatrix& A, RawMatrix& LU);
 
-	int LOS(Matrix& A, std::vector<double>& x, std::vector<double>& b)
+	int LOS(Matrix& A, vector<double>& x, vector<double>& b)
 	{
 		RawMatrix Raw;
 		Raw.N = A.N;
@@ -59,7 +59,7 @@ namespace Solvers
 
 	}
 
-	int BCG(Matrix& A, std::vector<double>& x, std::vector<double>& b)
+	int BCG(Matrix& A, vector<double>& x, vector<double>& b)
 	{
 		RawMatrix Raw;
 		Raw.N = A.N;
@@ -85,7 +85,7 @@ namespace Solvers
 		double lastdiff = 0;
 
 		x.resize(A.N);
-		return BCG_LU(Raw, x.data(), b.data(), LU, aux, 20000, 1.0e-14);
+		return BCG_LU(Raw, x.data(), b.data(), LU, aux, 20000, 1.0e-30);
 	}
 
 	void Multiply(RawMatrix& A, double* vec, double* res)

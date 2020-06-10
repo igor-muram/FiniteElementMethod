@@ -8,7 +8,7 @@ struct Edge
 	int valueNo;
 };
 
-void Boundary1(Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point>& pointsMap, double t)
+void Boundary1(Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point>& pointsMap, double time)
 {
 	vector<vector<double>> M =
 	{
@@ -28,7 +28,7 @@ void Boundary1(Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point
 
 	for (auto edge : bound)
 	{
-		function<double(double, double)> Ug = uValue[edge.valueNo];
+		function<double(double, double, double)> Ug = uValue[edge.valueNo];
 		vector<double> f(4);
 
 		double x0 = pointsMap[edge.v1].x;
@@ -37,7 +37,7 @@ void Boundary1(Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point
 		double y1 = pointsMap[edge.v4].y;
 
 		for (int i = 0; i < 4; i++)
-			f[i] = NewtonCotes(0.0, 1.0, [&](double t) { return Ug(x0 + t * (x1 - x0), y0 + t * (y1 - y0)) * basis[i](t); });
+			f[i] = NewtonCotes(0.0, 1.0, [&](double t) { return Ug(x0 + t * (x1 - x0), y0 + t * (y1 - y0), time) * basis[i](t); });
 
 		vector<double> q(4);
 		Gauss(M, q, f);
@@ -68,16 +68,18 @@ void Boundary2(Matrix& A, vector<double>& b, vector<Edge>& bound, map<int, Point
 		vector<int> v = { bound[edge].v1, bound[edge].v2, bound[edge].v3, bound[edge].v4 };
 		int thetaNo = bound[edge].valueNo;
 
-		function<double(double)> theta = thetaValue[thetaNo];
+		function<double(double, double, double)> theta = thetaValue[thetaNo];
 		double h = Distance(pointsMap[v[0]], pointsMap[v[3]]);
 
 		double x1 = pointsMap[v[0]].x;
 		double x2 = pointsMap[v[3]].x;
+		double y1 = pointsMap[v[0]].y;
+		double y2 = pointsMap[v[3]].y;
 
 		for (int i = 0; i < 4; i++)
 		{
 			function<double(double)> psi = basis[i];
-			b[v[i]] += h * NewtonCotes(0.0, 1.0, [&](double x) { return theta(x1 + (x2 - x1) * x) * psi(x); });
+			b[v[i]] += h * NewtonCotes(0.0, 1.0, [&](double x) { return theta(x1 + (x2 - x1) * x, y1 + (y2 - y1) * x, t) * psi(x); });
 		}
 
 	}

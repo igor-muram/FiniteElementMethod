@@ -34,7 +34,7 @@ void ThreeInitialVectorsWithMass(
 	// Set parameters for initial vector q0 =========================================================
 	vector<double> lambda = { 0 };
 	vector<double> gamma = { 1 };
-	function<double(double, double, double)> f = [](double x, double y, double t) { return x; };
+	function<double(double, double, double)> f = [](double x, double y, double t) { return t * x * x * y; };
 
 	builder.SetLambda(&lambda);
 	builder.SetGamma(&gamma);
@@ -93,7 +93,7 @@ void ThreeInitialVectorsWithLayers(
 	// Set parameters for initial vector q0 =========================================================
 	vector<double> lambda = { 0 };
 	vector<double> gamma = { 1 };
-	function<double(double, double, double)> f = [](double x, double y, double t) { return x * y; };
+	function<double(double, double, double)> f = [](double x, double y, double t) { return t * t; };
 
 	builder.SetLambda(&lambda);
 	builder.SetGamma(&gamma);
@@ -114,7 +114,7 @@ void ThreeInitialVectorsWithLayers(
 
 	// Set parameters for initial vector q0 =========================================================
 	lambda = { 1 };
-	f = [](double x, double y, double t) { return 0; };
+	f = [](double x, double y, double t) { return 2 * t; };
 
 	builder.SetLambda(&lambda);
 	builder.SetF(&f);
@@ -128,7 +128,7 @@ void ThreeInitialVectorsWithLayers(
 
 	builder.SetLayer(twoLayer);
 	builder.Build(A, b, t[1]);
-	Boundary2(A, b, bound2, pointsMap, lambda[0], t[0]);
+	Boundary2(A, b, bound2, pointsMap, lambda[0], t[1]);
 	Boundary1(A, b, bound1, pointsMap, t[1]);
 
 	Solvers::LOS(A, *q1, b);
@@ -146,7 +146,7 @@ void ThreeInitialVectorsWithLayers(
 
 	builder.SetLayer(threeLayer);
 	builder.Build(A, b, t[2]);
-	Boundary2(A, b, bound2, pointsMap, lambda[0], t[0]);
+	Boundary2(A, b, bound2, pointsMap, lambda[0], t[2]);
 	Boundary1(A, b, bound1, pointsMap, t[2]);
 
 	Solvers::LOS(A, *q2, b);
@@ -210,7 +210,7 @@ int main()
 	// Set parameters for four-layer scheme =========================================================
 	vector<double> lambda = { 1. };
 	vector<double> gamma = { 1 };
-	function<double(double, double, double)> f = [](double x, double y, double t) { return 0.; };
+	function<double(double, double, double)> f = [](double x, double y, double t) { return 2 * t; };
 	builder.SetLambda(&lambda);
 	builder.SetGamma(&gamma);
 	builder.SetF(&f);
@@ -238,9 +238,13 @@ int main()
 	}
 	// ==============================================================================================
 
-	for (int i = 4; i < 5; i++)
+	for (int i = 1; i < Qs.size(); i++)
+	{
 		for (int j = 0; j < (*Qs[i]).size(); j++)
 			printf("%.10f\n", (*Qs[i])[j]);
+
+		printf("\n");
+	}
 
 	system("pause");
 	return 0;
