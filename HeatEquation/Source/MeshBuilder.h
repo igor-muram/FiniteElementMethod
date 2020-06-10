@@ -15,7 +15,7 @@ public:
 		edgeMatrix.resize(nodeCount, vector<int>(nodeCount));
 	}
 
-	void Build(std::vector<FiniteElement>& elements)
+	void Build(vector<FiniteElement>& elements)
 	{
 		for (auto& e : elements)
 		{
@@ -26,7 +26,7 @@ public:
 					int a = e.verts[i];
 					int b = e.verts[j];
 					bool f = a > b;
-					if (f) std::swap(a, b);
+					if (f) swap(a, b);
 
 					if (edgeMatrix[a][b] == 0)
 					{

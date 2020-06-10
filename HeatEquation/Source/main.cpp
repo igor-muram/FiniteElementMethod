@@ -238,6 +238,7 @@ int main()
 	}
 	// ==============================================================================================
 
+	// Output solution ==============================================================================
 	for (int i = 1; i < Qs.size(); i++)
 	{
 		for (int j = 0; j < (*Qs[i]).size(); j++)
@@ -245,6 +246,21 @@ int main()
 
 		printf("\n");
 	}
+	// ==============================================================================================
+
+	// Calculation of a function value at an arbitrary point ========================================
+	double p1 = 1.0 / 3, p2 = 2.0 / 3;
+	vector<double> L = Ls(Point(p1, p2), pointsMap[0], pointsMap[1], pointsMap[2]);
+	FiniteElement e = elements[0];
+
+	double res = 0.0;
+	vector<double> last = *Qs.back();
+
+	for (int i = 0; i < basisSize; i++)
+		res += basisValue(i, L) * last[e.verts[i]];
+
+	printf("Function value at an point (%.5f, %.5f) is %.10f\n\n", p1, p2, res);
+	// ==============================================================================================
 
 	system("pause");
 	return 0;

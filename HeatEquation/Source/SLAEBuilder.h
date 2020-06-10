@@ -139,7 +139,6 @@ private:
 		vector<Point> coords = CalculateCoords(e, points);
 		double D = abs(Det(e, points));
 
-
 		vector<double> temp(basisSize);
 		for (int i = 0; i < basisSize; i++)
 			temp[i] = (*f)(coords[i].x, coords[i].y, t);

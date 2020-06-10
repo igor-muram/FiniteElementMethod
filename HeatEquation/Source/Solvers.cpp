@@ -51,7 +51,7 @@ namespace Solvers
 
 		RawMatrix LU;
 		LUFactorization(Raw, LU);
-		std::vector<double> Braw = b;
+		vector<double> Braw = b;
 		double lastdiff = 0;
 
 		x.resize(A.N);

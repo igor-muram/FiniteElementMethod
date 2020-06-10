@@ -7,7 +7,7 @@ using namespace std;
 
 struct FiniteElement
 {
-	std::vector<int> verts;
+	vector<int> verts;
 	int materialNo = 0;
 };
 
