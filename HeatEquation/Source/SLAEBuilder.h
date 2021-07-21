@@ -108,7 +108,6 @@ private:
 	{
 		double D = abs(Det(e, points));
 		vector<double> alpha = Alpha(e, points);
-
 		vector<Grad> grads =
 		{
 			{ alpha[0], alpha[1] },
@@ -131,6 +130,7 @@ private:
 					local[i][j] = (layer->c * gamma->at(e.materialNo) * M[i][j] + lambda->at(e.materialNo) * G) * D;
 				else
 					local[i][j] = (gamma->at(e.materialNo) * M[i][j] + lambda->at(e.materialNo) * G) * D;
+
 			}
 	}
 
@@ -139,25 +139,33 @@ private:
 		vector<Point> coords = CalculateCoords(e, points);
 		double D = abs(Det(e, points));
 
-		vector<double> temp(basisSize);
-		for (int i = 0; i < basisSize; i++)
-			temp[i] = (*f)(coords[i].x, coords[i].y, t);
-
 		for (int i = 0; i < basisSize; i++)
 		{
-			localb[i] = temp[0] * M[i][0];
+			localb[i] = Triangle([=](double ksi, double etta)
+				{
+					double L1 = 1 - ksi - etta;
+					double L2 = ksi;
+					double L3 = etta;
 
-			for (int j = 1; j < basisSize; j++)
-				localb[i] += temp[j] * M[i][j];
+					double res = 0.0;
+					for (auto comp : basis[i])
+						res += comp.coeff * pow(L1, comp.v1) * pow(L2, comp.v2) * pow(L3, comp.v3);
+
+					double x = L1 * coords[0].x + L2 * coords[1].x + L3 * coords[2].x;
+					double y = L1 * coords[0].y + L2 * coords[1].y + L3 * coords[2].y;
+
+					res *= (*f)(x, y, t);
+
+					return res;
+
+				}, D);
 
 			if (layer)
 			{
 				for (int k = 0; k < layer->size; k++)
 					for (int j = 0; j < basisSize; j++)
-						localb[i] += layer->cs[k] * (*layer->qs[k])[e.verts[j]] * gamma->at(e.materialNo) * M[i][j];
+						localb[i] += layer->cs[k] * (*layer->qs[k])[e.verts[j]] * gamma->at(e.materialNo) * M[i][j] * D;
 			}
-
-			localb[i] *= D;
 		}
 	}
 

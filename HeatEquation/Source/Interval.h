@@ -9,7 +9,7 @@ struct Interval
 	int n = 0;
 };
 
-inline istream& operator>>(istream& stream, Interval& interval)
+inline std::istream& operator>>(std::istream& stream, Interval& interval)
 {
 	stream >> interval.begin >> interval.end >> interval.n >> interval.q;
 	return stream;

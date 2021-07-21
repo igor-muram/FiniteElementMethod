@@ -8,7 +8,7 @@
 #include "PortraitBuilder.h"
 #include "SLAEBuilder.h"
 #include "Boundary.h"
-#include "Solvers.h"
+#include "Solver.h"
 #include "Layer.h"
 
 #include <string>
@@ -16,11 +16,12 @@
 
 using namespace std;
 
+
 void ThreeInitialVectorsWithMass(
-	SLAEBuilder& builder,
-	Matrix& A,
+	SLAEBuilder& builder, 
+	Matrix& A, 
 	vector<double>& b,
-	vector<double>& t,
+	vector<double>& t, 
 	map<int, Point>& pointsMap,
 	vector<Edge>& bound1,
 	vector<Edge>& bound2,
@@ -34,7 +35,7 @@ void ThreeInitialVectorsWithMass(
 	// Set parameters for initial vector q0 =========================================================
 	vector<double> lambda = { 0 };
 	vector<double> gamma = { 1 };
-	function<double(double, double, double)> f = [](double x, double y, double t) { return t * x * x * y; };
+	function<double(double, double, double)> f = [](double x, double y, double t) { return x; };
 
 	builder.SetLambda(&lambda);
 	builder.SetGamma(&gamma);
@@ -45,7 +46,7 @@ void ThreeInitialVectorsWithMass(
 	builder.Build(A, b, t[0]);
 	Boundary1(A, b, bound1, pointsMap, t[0]);
 
-	Solvers::LOS(A, *q0, b);
+	Solvers::BCG(A, *q0, b);
 	Qs.push_back(q0);
 
 	A.Clear();
@@ -56,7 +57,7 @@ void ThreeInitialVectorsWithMass(
 	builder.Build(A, b, t[1]);
 	Boundary1(A, b, bound1, pointsMap, t[1]);
 
-	Solvers::LOS(A, *q1, b);
+	Solvers::BCG(A, *q1, b);
 	Qs.push_back(q1);
 
 	A.Clear();
@@ -67,7 +68,7 @@ void ThreeInitialVectorsWithMass(
 	builder.Build(A, b, t[2]);
 	Boundary1(A, b, bound1, pointsMap, t[2]);
 
-	Solvers::LOS(A, *q2, b);
+	Solvers::BCG(A, *q2, b);
 	Qs.push_back(q2);
 
 	A.Clear();
@@ -93,7 +94,7 @@ void ThreeInitialVectorsWithLayers(
 	// Set parameters for initial vector q0 =========================================================
 	vector<double> lambda = { 0 };
 	vector<double> gamma = { 1 };
-	function<double(double, double, double)> f = [](double x, double y, double t) { return t * t; };
+	function<double(double, double, double)> f = [](double x, double y, double t) { return y * t * x * x; };
 
 	builder.SetLambda(&lambda);
 	builder.SetGamma(&gamma);
@@ -102,10 +103,9 @@ void ThreeInitialVectorsWithLayers(
 
 	// Get initial vector q0 ========================================================================
 	builder.Build(A, b, t[0]);
-
 	Boundary1(A, b, bound1, pointsMap, t[0]);
 
-	Solvers::LOS(A, *q0, b);
+	Solvers::BCG(A, *q0, b);
 	Qs.push_back(q0);
 
 	A.Clear();
@@ -114,7 +114,7 @@ void ThreeInitialVectorsWithLayers(
 
 	// Set parameters for initial vector q0 =========================================================
 	lambda = { 1 };
-	f = [](double x, double y, double t) { return 2 * t; };
+	f = [](double x, double y, double t) { return -2 * y * t + x * x * y; };
 
 	builder.SetLambda(&lambda);
 	builder.SetF(&f);
@@ -128,10 +128,9 @@ void ThreeInitialVectorsWithLayers(
 
 	builder.SetLayer(twoLayer);
 	builder.Build(A, b, t[1]);
-	Boundary2(A, b, bound2, pointsMap, lambda[0], t[1]);
 	Boundary1(A, b, bound1, pointsMap, t[1]);
 
-	Solvers::LOS(A, *q1, b);
+	Solvers::BCG(A, *q1, b);
 	Qs.push_back(q1);
 
 	fill(b.begin(), b.end(), 0.0);
@@ -146,10 +145,9 @@ void ThreeInitialVectorsWithLayers(
 
 	builder.SetLayer(threeLayer);
 	builder.Build(A, b, t[2]);
-	Boundary2(A, b, bound2, pointsMap, lambda[0], t[2]);
 	Boundary1(A, b, bound1, pointsMap, t[2]);
 
-	Solvers::LOS(A, *q2, b);
+	Solvers::BCG(A, *q2, b);
 	Qs.push_back(q2);
 
 	fill(b.begin(), b.end(), 0.0);
@@ -204,13 +202,12 @@ int main()
 	CreatePointMap(elements, points, pointsMap);
 	// ==============================================================================================
 
-
 	ThreeInitialVectorsWithLayers(builder, A, b, t, pointsMap, bound1, bound2, Qs);
 
 	// Set parameters for four-layer scheme =========================================================
-	vector<double> lambda = { 1. };
+	vector<double> lambda = { 1 };
 	vector<double> gamma = { 1 };
-	function<double(double, double, double)> f = [](double x, double y, double t) { return 2 * t; };
+	function<double(double, double, double)> f = [](double x, double y, double t) { return -2 * y * t + x * x * y; };
 	builder.SetLambda(&lambda);
 	builder.SetGamma(&gamma);
 	builder.SetF(&f);
@@ -226,41 +223,26 @@ int main()
 		fourLayer->SetT({ t[i - 3], t[i - 2], t[i - 1], t[i] });
 
 		builder.Build(A, b, t[i]);
-		Boundary2(A, b, bound2, pointsMap, lambda[0], t[i]);
 		Boundary1(A, b, bound1, pointsMap, t[i]);
 
 		q = new vector<double>(nodeCount);
-		Solvers::LOS(A, *q, b);
+		Solvers::BCG(A, *q, b);
 		Qs.push_back(q);
 
 		fill(b.begin(), b.end(), 0.0);
-		A.Clear();
+		A.Clear();	
 	}
 	// ==============================================================================================
 
-	// Output solution ==============================================================================
-	for (int i = 1; i < Qs.size(); i++)
-	{
-		for (int j = 0; j < (*Qs[i]).size(); j++)
-			printf("%.10f\n", (*Qs[i])[j]);
-
-		printf("\n");
-	}
-	// ==============================================================================================
-
-	// Calculation of a function value at an arbitrary point ========================================
-	double p1 = 1.0 / 3, p2 = 2.0 / 3;
-	vector<double> L = Ls(Point(p1, p2), pointsMap[0], pointsMap[1], pointsMap[2]);
+	vector<double> L = Ls(Point(1.0 / 3, 2.0 / 3), pointsMap[0], pointsMap[1], pointsMap[2]);
 	FiniteElement e = elements[0];
 
 	double res = 0.0;
 	vector<double> last = *Qs.back();
-
 	for (int i = 0; i < basisSize; i++)
+	{
 		res += basisValue(i, L) * last[e.verts[i]];
-
-	printf("Function value at an point (%.5f, %.5f) is %.10f\n\n", p1, p2, res);
-	// ==============================================================================================
+	}
 
 	system("pause");
 	return 0;

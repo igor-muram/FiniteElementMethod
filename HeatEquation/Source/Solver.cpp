@@ -1,4 +1,4 @@
-#include "Solvers.h"
+#include "Solver.h"
 #include <cmath>
 
 namespace Solvers
@@ -27,11 +27,11 @@ namespace Solvers
 		int* JA = nullptr;
 	};
 
-	int LOS_LU(RawMatrix& A, double* x, double* f, RawMatrix& LU, AuxVectors& aux, int maxiter, double eps, double& lastdiff);
+	int LOS_LU(RawMatrix& A, double* x, double* f, RawMatrix& LU, AuxVectors& aux, int maxiter, double eps);
 	int BCG_LU(RawMatrix& A, double* x, double* f, RawMatrix& LU, AuxVectors& aux, int maxiter, double eps);
 	void LUFactorization(RawMatrix& A, RawMatrix& LU);
 
-	int LOS(Matrix& A, vector<double>& x, vector<double>& b)
+	int LOS(Matrix& A, std::vector<double>& x, std::vector<double>& b)
 	{
 		RawMatrix Raw;
 		Raw.N = A.N;
@@ -51,15 +51,14 @@ namespace Solvers
 
 		RawMatrix LU;
 		LUFactorization(Raw, LU);
-		vector<double> Braw = b;
-		double lastdiff = 0;
+		std::vector<double> Braw = b;
 
 		x.resize(A.N);
-		return LOS_LU(Raw, x.data(), Braw.data(), LU, aux, 20000, 1.0e-30, lastdiff);
+		return LOS_LU(Raw, x.data(), Braw.data(), LU, aux, 20000, 1.0e-12);
 
 	}
 
-	int BCG(Matrix& A, vector<double>& x, vector<double>& b)
+	int BCG(Matrix& A, std::vector<double>& x, std::vector<double>& b)
 	{
 		RawMatrix Raw;
 		Raw.N = A.N;
@@ -85,7 +84,7 @@ namespace Solvers
 		double lastdiff = 0;
 
 		x.resize(A.N);
-		return BCG_LU(Raw, x.data(), b.data(), LU, aux, 20000, 1.0e-30);
+		return BCG_LU(Raw, x.data(), b.data(), LU, aux, 20000, 1.0e-12);
 	}
 
 	void Multiply(RawMatrix& A, double* vec, double* res)
@@ -303,7 +302,7 @@ namespace Solvers
 		return sum;
 	}
 
-	int LOS_LU(RawMatrix& A, double* x, double* f, RawMatrix& LU, AuxVectors& aux, int maxiter, double eps, double& lastdiff)
+	int LOS_LU(RawMatrix& A, double* x, double* f, RawMatrix& LU, AuxVectors& aux, int maxiter, double eps)
 	{
 		double* Ax = aux.Ax;
 		double* r = aux.r;
@@ -359,7 +358,6 @@ namespace Solvers
 			diff = DotProduct(N, r, r);
 		}
 
-		lastdiff = diff;
 		return k;
 	}
 

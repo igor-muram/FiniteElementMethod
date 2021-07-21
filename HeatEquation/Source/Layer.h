@@ -31,7 +31,7 @@ public:
 	TwoLayer() : Layer(1) {}
 
 	void SetT(vector<double> t)
-	{
+ 	{
 		cs.clear();
 		c = 1.0 / (t[1] - t[0]);
 		cs.push_back(c);
@@ -52,7 +52,7 @@ public:
 	void SetT(vector<double> t)
 	{
 		cs.clear();
-
+		
 		dt = t[2] - t[0];
 		dt0 = t[2] - t[1];
 		dt1 = t[1] - t[0];
@@ -110,3 +110,5 @@ public:
 private:
 	double dt01 = 0.0, dt02 = 0.0, dt03 = 0.0, dt12 = 0.0, dt13 = 0.0, dt23 = 0.0;
 };
+
+

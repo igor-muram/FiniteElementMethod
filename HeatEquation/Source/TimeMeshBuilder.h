@@ -4,12 +4,12 @@
 #include <vector>
 #include "Interval.h"
 
-using TimeIterator = vector<double>::iterator;
+using TimeIterator = std::vector<double>::iterator;
 
 class TimeMeshBuilder
 {
 public:
-	TimeMeshBuilder(vector<Interval>& intervals)
+	TimeMeshBuilder(std::vector<Interval>& intervals)
 	{
 		for (auto interval : intervals)
 		{
@@ -31,7 +31,7 @@ public:
 		t.push_back(intervals.back().end);
 	}
 
-	const vector<double>& getMesh() { return t; }
+	const std::vector<double>& getMesh() { return t; }
 
 	TimeIterator Begin() { return t.begin(); }
 	TimeIterator End() { return t.end(); }
@@ -39,5 +39,5 @@ public:
 	int Size() { return t.size(); }
 
 private:
-	vector<double> t;
+	std::vector<double> t;
 };
