@@ -207,7 +207,6 @@ namespace Solvers
 			// Calculate DI[i]
 			LU.DI[i] = A.DI[i] - sumD;
 		}
-
 	}
 
 	void Forward(RawMatrix& A, double* x, double* b, bool transposed)

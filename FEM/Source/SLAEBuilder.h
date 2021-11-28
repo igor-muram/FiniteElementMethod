@@ -4,8 +4,6 @@
 #include "Math.h"
 #include "Matrix.h"
 
-#include "Layer.h"
-
 #include <vector>
 #include <algorithm>
 #include <functional>
@@ -17,8 +15,7 @@ class SLAEBuilder
 public:
 	SLAEBuilder(vector<Point>& points, vector<FiniteElement>& elements) :
 		points(points),
-		elements(elements),
-		layer(layer)
+		elements(elements)
 	{
 		local.resize(basisSize, vector<double>(basisSize));
 		localb.resize(basisSize);
@@ -26,7 +23,7 @@ public:
 		BuildPatterns();
 	}
 
-	bool Build(Matrix& A, vector<double>& b, double t)
+	bool Build(Matrix& A, vector<double>& b)
 	{
 		if (lambda == nullptr || gamma == nullptr || f == nullptr)
 			return false;
@@ -34,35 +31,24 @@ public:
 		for (auto& e : elements)
 		{
 			BuildLocalMatrix(e);
-			BuildLocalB(e, t);
+			BuildLocalB(e);
 			AddLocalToGlobal(A, b, e);
 		}
 
 		return true;
 	}
 
-	void SetLayer(Layer* layer)
-	{
-		this->layer = layer;
-	}
-	void ClearLayer()
-	{
-		this->layer = nullptr;
-	}
-
 	void SetLambda(vector<double>* lambda) { this->lambda = lambda; }
 	void SetGamma(vector<double>* gamma) { this->gamma = gamma; }
-	void SetF(function<double(double, double, double)>* f) { this->f = f; }
+	void SetF(function<double(double, double)>* f) { this->f = f; }
 
 private:
 	vector<Point>& points;
 	vector<FiniteElement>& elements;
 
-	Layer* layer = nullptr;
-
 	vector<double>* lambda = nullptr;
 	vector<double>* gamma = nullptr;
-	function<double(double, double, double)>* f = nullptr;
+	function<double(double, double)>* f = nullptr;
 
 	vector<vector<double>> M;
 	vector<vector<vector<LocalComp>>> gPattern;
@@ -126,15 +112,11 @@ private:
 					G += comp.coeff * scalGrad;
 				}
 
-				if (layer)
-					local[i][j] = (layer->c * gamma->at(e.materialNo) * M[i][j] + lambda->at(e.materialNo) * G) * D;
-				else
-					local[i][j] = (gamma->at(e.materialNo) * M[i][j] + lambda->at(e.materialNo) * G) * D;
-
+				local[i][j] = (gamma->at(e.materialNo) * M[i][j] + lambda->at(e.materialNo) * G) * D;
 			}
 	}
 
-	void BuildLocalB(FiniteElement& e, double t)
+	void BuildLocalB(FiniteElement& e)
 	{
 		vector<Point> coords = CalculateCoords(e, points);
 		double D = abs(Det(e, points));
@@ -154,18 +136,11 @@ private:
 					double x = L1 * coords[0].x + L2 * coords[1].x + L3 * coords[2].x;
 					double y = L1 * coords[0].y + L2 * coords[1].y + L3 * coords[2].y;
 
-					res *= (*f)(x, y, t);
+					res *= (*f)(x, y);
 
 					return res;
 
 				}, D);
-
-			if (layer)
-			{
-				for (int k = 0; k < layer->size; k++)
-					for (int j = 0; j < basisSize; j++)
-						localb[i] += layer->cs[k] * (*layer->qs[k])[e.verts[j]] * gamma->at(e.materialNo) * M[i][j] * D;
-			}
 		}
 	}
 

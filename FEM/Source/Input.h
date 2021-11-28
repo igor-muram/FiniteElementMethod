@@ -38,23 +38,11 @@ void InputGrid(
 			>> elements[i].verts[1]
 			>> elements[i].verts[2]
 			>> elements[i].materialNo;
-	}
 
-	in.close();
-}
-
-void InputTime(vector<Interval>& time_intervals, string timeFile)
-{
-	ifstream in(timeFile);
-
-	int time_count;
-	in >> time_count;
-
-	for (int i = 0; i < time_count; i++)
-	{
-		Interval interval;
-		in >> interval;
-		time_intervals.push_back(interval);
+		elements[i].verts[0]--;
+		elements[i].verts[1]--;
+		elements[i].verts[2]--;
+		elements[i].materialNo -= 2;
 	}
 
 	in.close();
@@ -67,8 +55,12 @@ void InputBound(vector<Edge>& bound, string boundsFile)
 	in >> edgeCount;
 	bound.resize(edgeCount);
 
-	for (int i = 0; i < edgeCount; i++)
+	for (int i = 0; i < edgeCount; i++) {
 		in >> bound[i].v1 >> bound[i].v4 >> bound[i].valueNo;
+		bound[i].v1--;
+		bound[i].v4--;
+		bound[i].valueNo -= 2;
+	}
 
 	in.close();
 }
